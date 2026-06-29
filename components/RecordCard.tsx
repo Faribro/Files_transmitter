@@ -13,6 +13,8 @@ interface RecordCardProps {
     date: string
     pdf_path?: string
     dcm_path?: string
+    hasPdf?: boolean
+    hasDcm?: boolean
   }
   onViewDetails: (record: any) => void
 }
@@ -62,19 +64,19 @@ export default function RecordCard({ record, onViewDetails }: RecordCardProps) {
 
       {/* Files Available */}
       <div className="flex items-center gap-2 pt-3 border-t border-border-subtle">
-        {record.pdf_path && (
-          <div className="flex items-center gap-1 text-xs text-text-tertiary">
-            <FileText className="w-4 h-4" />
+        {(record.hasPdf || record.pdf_path) && (
+          <div className="flex items-center gap-1 px-2 py-1 bg-blue-50 rounded text-xs font-medium text-blue-700">
+            <FileText className="w-3.5 h-3.5" />
             <span>PDF</span>
           </div>
         )}
-        {record.dcm_path && (
-          <div className="flex items-center gap-1 text-xs text-text-tertiary">
-            <ImageIcon className="w-4 h-4" />
+        {(record.hasDcm || record.dcm_path) && (
+          <div className="flex items-center gap-1 px-2 py-1 bg-purple-50 rounded text-xs font-medium text-purple-700">
+            <ImageIcon className="w-3.5 h-3.5" />
             <span>DICOM</span>
           </div>
         )}
-        {!record.pdf_path && !record.dcm_path && (
+        {!record.hasPdf && !record.hasDcm && !record.pdf_path && !record.dcm_path && (
           <span className="text-xs text-text-disabled">No files available</span>
         )}
       </div>

@@ -1,7 +1,11 @@
 'use client'
 
-import { X, Download, FileText, ImageIcon, ZoomIn, ZoomOut, RotateCw } from 'lucide-react'
+import { X, Download, FileText, ImageIcon } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { apiUrl } from '@/lib/api'
+import dynamic from 'next/dynamic'
+
+const DicomViewer = dynamic(() => import('./DicomViewer'), { ssr: false })
 
 interface RecordModalProps {
   record: any
@@ -10,23 +14,31 @@ interface RecordModalProps {
 }
 
 export default function RecordModal({ record, isOpen, onClose }: RecordModalProps) {
-  const [imageZoom, setImageZoom] = useState(100)
-  const [imageRotation, setImageRotation] = useState(0)
   const [imageError, setImageError] = useState(false)
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null)
 
   useEffect(() => {
+    // Global error handler for unhandled rejections
+    const handleGlobalRejection = (event: PromiseRejectionEvent) => {
+      if (event.reason && (event.reason instanceof XMLHttpRequest || event.reason?.toString().includes('XMLHttpRequest'))) {
+        event.preventDefault()
+        console.warn('Caught XMLHttpRequest rejection in modal')
+      }
+    }
+
     if (isOpen) {
       document.body.style.overflow = 'hidden'
+      window.addEventListener('unhandledrejection', handleGlobalRejection)
     } else {
       document.body.style.overflow = 'unset'
-      setImageZoom(100)
-      setImageRotation(0)
       setImageError(false)
+      setDownloadUrl(null)
     }
     return () => {
       document.body.style.overflow = 'unset'
+      window.removeEventListener('unhandledrejection', handleGlobalRejection)
     }
-  }, [isOpen])
+  }, [isOpen, record])
 
   if (!isOpen || !record) return null
 
@@ -87,111 +99,91 @@ export default function RecordModal({ record, isOpen, onClose }: RecordModalProp
 
           {/* File Viewers */}
           <div className="px-6 py-6">
+            {/* Show message if PDF not yet migrated */}
+            {!record.pdfFileId && !record.pdf_path && record.dcmFileId && (
+              <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  📋 PDF reports are still being migrated. DICOM scan available below.
+                </p>
+              </div>
+            )}
+            
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* PDF Viewer */}
-              {record.pdf_path ? (
+              {(record.pdfFiles && record.pdfFiles.length > 0) || record.pdfFileId ? (
                 <div className="border border-border-default rounded-lg overflow-hidden">
                   <div className="flex items-center justify-between px-4 py-3 bg-surface-sunken border-b border-border-subtle">
                     <div className="flex items-center gap-2">
                       <FileText className="w-5 h-5 text-brand-700" />
                       <span className="text-sm font-semibold">PDF Report</span>
+                      {record.pdfFiles && record.pdfFiles.length > 1 && (
+                        <span className="text-xs bg-brand-100 text-brand-700 px-2 py-0.5 rounded-full">
+                          +{record.pdfFiles.length - 1} more
+                        </span>
+                      )}
                     </div>
                     <a
-                      href={record.pdf_path}
+                      href={apiUrl(`/api/v1/files/${record.pdfFiles?.[0]?.id || record.pdfFileId || record.fileId}/download`)}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="flex items-center gap-1 text-xs text-brand-700 hover:text-brand-900 font-medium"
                     >
                       <Download className="w-4 h-4" />
-                      Open
+                      Open PDF
                     </a>
                   </div>
-                  <div className="h-[500px] bg-surface-page">
+                  <div className="h-[600px] bg-surface-page">
                     <iframe
-                      src={record.pdf_path}
+                      src={apiUrl(`/api/v1/files/${record.pdfFiles?.[0]?.id || record.pdfFileId || record.fileId}/download`)}
                       className="w-full h-full border-0"
                       title="PDF Viewer"
                     />
                   </div>
                 </div>
               ) : (
-                <div className="border border-border-default rounded-lg p-8 text-center">
+                <div className="border border-border-default rounded-lg p-8 text-center bg-surface-sunken">
                   <FileText className="w-12 h-12 text-text-disabled mx-auto mb-3" />
-                  <p className="text-text-tertiary">No PDF available</p>
+                  <p className="text-text-secondary font-semibold mb-1">PDF Not Available Yet</p>
+                  <p className="text-xs text-text-tertiary">PDF reports are being migrated and will appear here soon</p>
                 </div>
               )}
 
               {/* Medical Image Viewer (DICOM/PNG/JPG) */}
-              {record.dcm_path ? (
+              {record.dcmFileId || (record.dcmFiles && record.dcmFiles.length > 0) ? (
+                <DicomViewer 
+                  fileUrl={apiUrl(`/api/v1/files/${record.dcmFiles?.[0]?.id || record.dcmFileId || record.fileId}/download`)}
+                  filename={record.dcmFiles?.[0]?.filename || record.name || 'medical-scan.dcm'}
+                />
+              ) : record.imageFiles && record.imageFiles.length > 0 ? (
                 <div className="border border-border-default rounded-lg overflow-hidden">
                   <div className="flex items-center justify-between px-4 py-3 bg-surface-sunken border-b border-border-subtle">
                     <div className="flex items-center gap-2">
                       <ImageIcon className="w-5 h-5 text-brand-700" />
-                      <span className="text-sm font-semibold">Medical Scan ({record.fileType?.toUpperCase()})</span>
+                      <span className="text-sm font-semibold">Medical Image</span>
                     </div>
-                    <div className="flex items-center gap-3">
-                      {/* Image Controls */}
-                      <div className="flex items-center gap-1 border-r border-border-subtle pr-3">
-                        <button
-                          onClick={() => setImageZoom(Math.max(50, imageZoom - 10))}
-                          className="p-1.5 hover:bg-surface-page rounded transition-colors"
-                          title="Zoom Out"
-                        >
-                          <ZoomOut className="w-4 h-4" />
-                        </button>
-                        <span className="text-xs font-mono w-12 text-center">{imageZoom}%</span>
-                        <button
-                          onClick={() => setImageZoom(Math.min(200, imageZoom + 10))}
-                          className="p-1.5 hover:bg-surface-page rounded transition-colors"
-                          title="Zoom In"
-                        >
-                          <ZoomIn className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => setImageRotation((imageRotation + 90) % 360)}
-                          className="p-1.5 hover:bg-surface-page rounded transition-colors ml-1"
-                          title="Rotate"
-                        >
-                          <RotateCw className="w-4 h-4" />
-                        </button>
-                      </div>
-                      <a
-                        href={record.dcm_path}
-                        download
-                        className="flex items-center gap-1 text-xs text-brand-700 hover:text-brand-900 font-medium"
-                      >
-                        <Download className="w-4 h-4" />
-                        Download
-                      </a>
-                    </div>
+                    <a
+                      href={apiUrl(`/api/v1/files/${record.imageFiles[0].id}/download`)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-1 text-xs text-brand-700 hover:text-brand-900 font-medium"
+                    >
+                      <Download className="w-4 h-4" />
+                      Download
+                    </a>
                   </div>
-                  <div className="h-[500px] bg-black relative overflow-auto flex items-center justify-center">
-                    {imageError ? (
-                      <div className="text-white text-center">
-                        <ImageIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                        <p className="text-sm">Unable to load image</p>
-                        <p className="text-xs opacity-70 mt-1">Format: {record.fileType}</p>
-                      </div>
-                    ) : (
-                      <img
-                        src={record.dcm_path}
-                        alt="Medical Scan"
-                        className="transition-transform duration-200"
-                        style={{
-                          transform: `scale(${imageZoom / 100}) rotate(${imageRotation}deg)`,
-                          maxWidth: '100%',
-                          maxHeight: '100%',
-                          objectFit: 'contain',
-                        }}
-                        onError={() => setImageError(true)}
-                      />
-                    )}
+                  <div className="h-[600px] bg-black flex items-center justify-center">
+                    <img
+                      src={apiUrl(`/api/v1/files/${record.imageFiles[0].id}/download`)}
+                      alt="Medical Image"
+                      className="max-w-full max-h-full object-contain"
+                      onError={() => setImageError(true)}
+                    />
                   </div>
                 </div>
               ) : (
                 <div className="border border-border-default rounded-lg p-8 text-center">
                   <ImageIcon className="w-12 h-12 text-text-disabled mx-auto mb-3" />
-                  <p className="text-text-tertiary">No medical scan available</p>
+                  <p className="text-text-tertiary">No medical scan available for this patient</p>
                 </div>
               )}
             </div>
