@@ -3,13 +3,14 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Database, FileText, BarChart3, Users, Menu, X, IndianRupee, FileSpreadsheet } from 'lucide-react'
+import { Home, Database, FileText, BarChart3, Users, Menu, X, IndianRupee, FileSpreadsheet, CalendarDays, ShieldCheck } from 'lucide-react'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home },
   { name: 'AKROSS Migration', href: '/patients?facility=AKROSS', icon: Database },
   { name: 'DAVO Migration', href: '/patients?facility=DAVO', icon: FileText },
-  { name: 'Analytics', href: '/analytics', icon: BarChart3 },
+  { name: 'Migration Analytics', href: '/analytics', icon: CalendarDays },
+  { name: 'Verification Status', href: '/analytics?tab=verify', icon: ShieldCheck },
   { name: 'Finance', href: '/finance', icon: IndianRupee },
   { name: 'All Records', href: '/records', icon: Users },
   { name: 'Patient Linelist', href: '/linelist', icon: FileSpreadsheet },
