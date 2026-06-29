@@ -133,8 +133,11 @@ function GridCell({ cells, month, facility, onClick, selected }: {
   )
 }
 
-// ── Main page ────────────────────────────────────────────────────────────────
-export default function MigrationAnalyticsPage() {
+import { Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
+
+// ── Main content wrapper ──────────────────────────────────────────────────────
+function AnalyticsContent() {
   const [data, setData]           = useState<AnalyticsData | null>(null)
   const [loading, setLoading]     = useState(true)
   const [facilityFilter, setFacilityFilter] = useState<string>('ALL')
@@ -143,6 +146,16 @@ export default function MigrationAnalyticsPage() {
   const [activeTab, setActiveTab] = useState<'grid'|'chart'|'types'|'patients'|'verify'>('grid')
   const [searchPat, setSearchPat] = useState('')
   const [error, setError]         = useState<string | null>(null)
+
+  const searchParams = useSearchParams()
+  const tabParam = searchParams.get('tab')
+
+  // Set active tab based on query param
+  useEffect(() => {
+    if (tabParam && ['grid', 'chart', 'types', 'patients', 'verify'].includes(tabParam)) {
+      setActiveTab(tabParam as any)
+    }
+  }, [tabParam])
 
   const fetchData = useCallback(async () => {
     setLoading(true); setError(null)
@@ -608,5 +621,13 @@ export default function MigrationAnalyticsPage() {
         </p>
       )}
     </div>
+  )
+}
+
+export default function MigrationAnalyticsPage() {
+  return (
+    <Suspense fallback={<div className="p-6 text-text-tertiary">Loading analytics…</div>}>
+      <AnalyticsContent />
+    </Suspense>
   )
 }
