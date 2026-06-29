@@ -19,6 +19,8 @@ interface MonthCell {
   file_count: number
   size_bytes: number
   patient_count: number
+  dcm_count?: number
+  pdf_count?: number
 }
 
 interface PatientRow {
@@ -105,6 +107,11 @@ function GridCell({ cells, month, facility, onClick, selected }: {
   const completed = relevant.find(c => c.status === 'completed')?.file_count || 0
   const pct      = total > 0 ? Math.round((completed / total) * 100) : null
 
+  const totalDcm = relevant.reduce((s, c) => s + (c.dcm_count || 0), 0)
+  const completedDcm = relevant.find(c => c.status === 'completed')?.dcm_count || 0
+  const totalPdf = relevant.reduce((s, c) => s + (c.pdf_count || 0), 0)
+  const completedPdf = relevant.find(c => c.status === 'completed')?.pdf_count || 0
+
   const bg = pct === null ? 'bg-slate-50 border-slate-200 text-slate-300'
     : pct === 100 ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
     : pct > 50    ? 'bg-amber-50 border-amber-300 text-amber-700'
@@ -125,6 +132,16 @@ function GridCell({ cells, month, facility, onClick, selected }: {
         <>
           <div className="text-sm font-bold">{pct}%</div>
           <div className="text-[10px] mt-0.5">{fmtNum(completed)}/{fmtNum(total)}</div>
+          <div className="text-[9px] text-text-tertiary mt-1.5 border-t border-slate-200/50 pt-1 space-y-0.5">
+            <div className="flex justify-between">
+              <span>📷 DCM:</span>
+              <span className="font-semibold">{fmtNum(completedDcm)}/{fmtNum(totalDcm)}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>📄 PDF:</span>
+              <span className="font-semibold">{fmtNum(completedPdf)}/{fmtNum(totalPdf)}</span>
+            </div>
+          </div>
         </>
       ) : (
         <div className="text-[10px]">No data</div>
