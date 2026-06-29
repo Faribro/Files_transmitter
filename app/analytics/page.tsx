@@ -8,7 +8,8 @@ import {
 import { 
   CheckCircle, AlertCircle, Clock, XCircle, ChevronRight,
   ChevronDown, Filter, RefreshCw, Download, Search, 
-  Building2, Calendar, FileText, Users, HardDrive, Shield
+  Building2, Calendar, FileText, Users, HardDrive, Shield,
+  LayoutGrid, BarChart2, FolderHeart, ShieldCheck
 } from 'lucide-react'
 
 // ── Types ──────────────────────────────────────────────────────────────────
@@ -133,12 +134,18 @@ function GridCell({ cells, month, facility, onClick, selected }: {
           <div className="text-sm font-bold">{pct}%</div>
           <div className="text-[10px] mt-0.5">{fmtNum(completed)}/{fmtNum(total)}</div>
           <div className="text-[9px] text-text-tertiary mt-1.5 border-t border-slate-200/50 pt-1 space-y-0.5">
-            <div className="flex justify-between">
-              <span>📷 DCM:</span>
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1">
+                <HardDrive className="w-2.5 h-2.5 text-text-tertiary" />
+                <span>DCM:</span>
+              </span>
               <span className="font-semibold">{fmtNum(completedDcm)}/{fmtNum(totalDcm)}</span>
             </div>
-            <div className="flex justify-between">
-              <span>📄 PDF:</span>
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1">
+                <FileText className="w-2.5 h-2.5 text-text-tertiary" />
+                <span>PDF:</span>
+              </span>
               <span className="font-semibold">{fmtNum(completedPdf)}/{fmtNum(totalPdf)}</span>
             </div>
           </div>
@@ -238,11 +245,11 @@ function AnalyticsContent() {
   }
 
   const TABS = [
-    { id: 'grid',     label: '📅 Monthly Grid' },
-    { id: 'chart',    label: '📊 Trend Chart'  },
-    { id: 'types',    label: '📁 File Types'   },
-    { id: 'patients', label: `👥 Patient Drill-Down${selectedMonth ? ` · ${MONTH_LABELS[selectedMonth]}` : ''}` },
-    { id: 'verify',   label: `🛡️ Verification${data?.verificationGaps.passed ? ' ✅' : ' ⚠️'}` },
+    { id: 'grid',     label: 'Monthly Grid', icon: LayoutGrid },
+    { id: 'chart',    label: 'Trend Chart',  icon: BarChart2 },
+    { id: 'types',    label: 'File Types',   icon: FileText },
+    { id: 'patients', label: `Patient Drill-Down${selectedMonth ? ` · ${MONTH_LABELS[selectedMonth]}` : ''}`, icon: Users },
+    { id: 'verify',   label: 'Verification',  icon: ShieldCheck },
   ]
 
   return (
@@ -283,8 +290,9 @@ function AnalyticsContent() {
       </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-700">
-          ⚠️ {error}
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-sm text-red-700 flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+          <span>{error}</span>
         </div>
       )}
 
@@ -297,7 +305,7 @@ function AnalyticsContent() {
             { label: 'Pending',      value: fmtNum(kpis.pending),    color: 'text-amber-600',    icon: Clock        },
             { label: 'Failed',       value: fmtNum(kpis.failed),     color: 'text-red-500',      icon: XCircle      },
             { label: 'Total Size',   value: fmtBytes(kpis.size),     color: 'text-indigo-600',   icon: HardDrive    },
-            { label: 'Verification', value: data?.verificationGaps.passed ? 'PASSED ✅' : `${data?.verificationGaps.missing} gaps`, 
+            { label: 'Verification', value: data?.verificationGaps.passed ? 'PASSED' : `${data?.verificationGaps.missing} gaps`, 
               color: data?.verificationGaps.passed ? 'text-emerald-600' : 'text-red-500', icon: Shield },
           ].map(k => {
             const Icon = k.icon
@@ -318,8 +326,9 @@ function AnalyticsContent() {
       {data?.reorganization && (
         <div className="bg-white rounded-xl border border-border-default p-4 shadow-sm">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-sm font-semibold text-text-primary">
-              🗂️ Canonical Path Reorganization
+            <span className="flex items-center gap-1.5 text-sm font-semibold text-text-primary">
+              <FolderHeart className="w-4 h-4 text-brand-600" />
+              Canonical Path Reorganization
             </span>
             <span className="text-xs text-text-tertiary">
               {fmtNum(data.reorganization.canonical_paths)} / {fmtNum(data.reorganization.total_completed)} files · {data.reorganization.percent_reorganized}%
@@ -340,17 +349,26 @@ function AnalyticsContent() {
       {/* ── Tabs ───────────────────────────────────────────────────────────── */}
       <div className="bg-white rounded-xl border border-border-default shadow-sm overflow-hidden">
         <div className="flex overflow-x-auto border-b border-border-subtle">
-          {TABS.map(t => (
-            <button
-              key={t.id}
-              onClick={() => setActiveTab(t.id as any)}
-              className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors
-                ${activeTab === t.id
-                  ? 'border-b-2 border-brand-500 text-brand-700 bg-brand-50'
-                  : 'text-text-secondary hover:text-text-primary hover:bg-surface-sunken'
-                }`}
-            >{t.label}</button>
-          ))}
+          {TABS.map(t => {
+            const Icon = t.icon
+            return (
+              <button
+                key={t.id}
+                onClick={() => setActiveTab(t.id as any)}
+                className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-all border-b-2
+                  ${activeTab === t.id
+                    ? 'border-brand-500 text-brand-700 bg-brand-50/50'
+                    : 'border-transparent text-text-secondary hover:text-text-primary hover:bg-surface-sunken'
+                  }`}
+              >
+                <Icon className={`w-4 h-4 shrink-0 ${activeTab === t.id ? 'text-brand-600' : 'text-text-tertiary'}`} />
+                <span>{t.label}</span>
+                {t.id === 'verify' && (
+                  <span className={`w-2 h-2 rounded-full ${data?.verificationGaps.passed ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+                )}
+              </button>
+            )
+          })}
         </div>
 
         <div className="p-6">
