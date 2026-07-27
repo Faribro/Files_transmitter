@@ -57,7 +57,7 @@ export default function DriveExplorer({ facility, initialMonth }: DriveExplorerP
           size_bytes: f.size_bytes || 0,
           patient_id: f.inmate_id || f.patient_id,
           month: f.month,
-          azure_url: f.target_file_id || f.azure_url,
+          azure_url: f.target_path || f.target_file_id || f.azure_url,
           discovered_at: f.discovered_at
         }))
         setItemList(files)
@@ -104,8 +104,9 @@ export default function DriveExplorer({ facility, initialMonth }: DriveExplorerP
   const uniquePatientIds = Array.from(new Set(
     itemList
       .map(i => {
-        const m = (i.name || '').match(/AS\d{2}[A-Z]{3}\d{8,12}/i)
-        return m ? m[0].toUpperCase() : i.patient_id
+        if (i.patient_id && i.patient_id !== 'None') return i.patient_id.toUpperCase()
+        const m = (i.azure_url || i.name || '').match(/(AS\d{2}[A-Z]{3}\d{8,12})/i)
+        return m ? m[1].toUpperCase() : null
       })
       .filter(Boolean)
   )) as string[]
