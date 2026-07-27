@@ -320,7 +320,10 @@ export default function DriveExplorer({ facility, initialMonth }: DriveExplorerP
                   {patientFiles.dcm ? (
                     <div className="space-y-4">
                       {/* Interactive Canvas Viewer */}
-                      <DicomViewer fileId={patientFiles.dcm.id} />
+                      <DicomViewer 
+                        fileUrl={patientFiles.dcm.azure_url || `/api/v1/files/${patientFiles.dcm.id}/content`} 
+                        filename={patientFiles.dcm.name} 
+                      />
                       <div className="p-3 rounded-xl bg-slate-900 border border-slate-800/80 text-xs space-y-1.5">
                         <div className="flex justify-between"><span className="text-slate-400">Filename:</span><span className="font-semibold text-slate-200 truncate max-w-[200px]">{patientFiles.dcm.name}</span></div>
                         <div className="flex justify-between"><span className="text-slate-400">File Size:</span><span className="font-semibold text-slate-200">{(patientFiles.dcm.size_bytes / (1024*1024)).toFixed(2)} MB</span></div>
