@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Database, FileText, Menu, X, ShieldCheck, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Home, Database, FileText, Menu, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import AllianceIndiaLogo from './AllianceIndiaLogo'
 
 const navigation = [
@@ -38,16 +38,20 @@ export default function Sidebar() {
         `}
       >
         <div>
-          {/* Logo & Header */}
-          <div className={`px-4 py-5 border-b border-slate-100 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
-            <Link href="/" className="flex items-center gap-3">
+          {/* Logo & Toggle Header */}
+          <div className="px-3 py-5 border-b border-slate-100 flex items-center justify-between">
+            <button 
+              onClick={() => setIsCollapsed(!isCollapsed)}
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+              title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            >
               <AllianceIndiaLogo collapsed={isCollapsed} />
-            </Link>
+            </button>
 
-            {/* Collapse Toggle Button (Desktop) */}
+            {/* Collapse Toggle Button (Desktop Chevron) */}
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="hidden lg:flex items-center justify-center w-7 h-7 rounded-xl bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 border border-slate-200/80 transition-colors"
+              className="hidden lg:flex items-center justify-center w-7 h-7 rounded-xl bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 border border-slate-200/80 transition-colors flex-shrink-0"
               title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
             >
               {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
@@ -92,25 +96,6 @@ export default function Sidebar() {
                 )
               })}
             </nav>
-          </div>
-        </div>
-
-        {/* Footer System Health */}
-        <div className="p-3 border-t border-slate-100 bg-slate-50/50">
-          <div className={`p-3 rounded-2xl bg-white border border-slate-200/80 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'} shadow-sm`}>
-            <div className="flex items-center gap-2.5">
-              <span className="relative flex h-3 w-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-              </span>
-              {!isCollapsed && (
-                <div>
-                  <p className="text-xs font-black text-slate-800">System Active</p>
-                  <p className="text-[10px] font-semibold text-slate-500">FastAPI & Azure</p>
-                </div>
-              )}
-            </div>
-            {!isCollapsed && <ShieldCheck className="w-4 h-4 text-emerald-500" />}
           </div>
         </div>
       </aside>
