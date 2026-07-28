@@ -355,60 +355,88 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
               {months.map((mf, i) => {
                 const stats = getDynamicMonthStats(facility, mf.key)
                 const hasData = Boolean(stats && stats.patients > 0)
+
+                if (hasData) {
+                  return (
+                    <motion.button
+                      key={mf.key}
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.02 }}
+                      whileHover={{ scale: 1.04, y: -3 }}
+                      whileTap={{ scale: 0.97 }}
+                      onClick={() => handleMonthClick(mf.key)}
+                      className="group relative flex flex-col items-start p-5 rounded-2xl bg-gradient-to-br from-indigo-50/80 via-white to-purple-50/80 border-2 border-indigo-400 hover:border-indigo-600 shadow-md shadow-indigo-500/10 hover:shadow-xl hover:shadow-indigo-500/20 transition-all text-left overflow-hidden"
+                    >
+                      {/* Top Icon & Active Badge */}
+                      <div className="w-full flex items-center justify-between mb-3">
+                        <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-600 to-purple-600 text-white flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
+                          <Folder className="w-6 h-6" />
+                        </div>
+                        <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-emerald-500 text-white shadow-sm flex items-center gap-1">
+                          <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> Active Data
+                        </span>
+                      </div>
+
+                      <h3 className="text-xl font-black tracking-tight text-slate-900 group-hover:text-indigo-700">
+                        {mf.label}
+                      </h3>
+
+                      {stats && (
+                        <div className="mt-2 space-y-1 w-full">
+                          <p className="text-sm font-extrabold text-indigo-950">
+                            {fmtNum(stats.patients)} patients
+                          </p>
+                          <p className="text-xs font-bold text-slate-700 bg-white/90 px-2.5 py-0.5 rounded-lg border border-slate-200 shadow-sm inline-block">
+                            {fmtNum(stats.dcm)} DCM · {fmtNum(stats.pdf)} PDF
+                          </p>
+                        </div>
+                      )}
+
+                      <div className="mt-3 flex items-center gap-1 text-[10px] font-extrabold text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span>Open Directory</span><ChevronRight className="w-3 h-3" />
+                      </div>
+                    </motion.button>
+                  )
+                }
+
+                // UPCOMING / EMPTY MONTH CARD (NO DATA)
                 return (
                   <motion.button
                     key={mf.key}
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.02 }}
-                    whileHover={{ scale: 1.04, y: -3 }}
-                    whileTap={{ scale: 0.97 }}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => handleMonthClick(mf.key)}
-                    className={`group relative flex flex-col items-start p-5 rounded-2xl transition-all text-left overflow-hidden ${
-                      hasData
-                        ? 'bg-gradient-to-br from-white via-indigo-50/30 to-purple-50/40 border-2 border-indigo-200/90 hover:border-indigo-500 shadow-md shadow-indigo-500/5 hover:shadow-xl hover:shadow-indigo-500/15'
-                        : 'bg-slate-50/60 border-2 border-dashed border-slate-200/90 hover:border-slate-300 hover:bg-slate-100/60 opacity-65 hover:opacity-100 shadow-none'
-                    }`}
+                    className="group relative flex flex-col items-start p-5 rounded-2xl bg-slate-100/80 border-2 border-dashed border-slate-300 hover:border-slate-400 hover:bg-slate-200/60 transition-all text-left overflow-hidden opacity-75 hover:opacity-100"
                   >
-                    {/* Top Icon & Status Badge */}
+                    {/* Top Icon & Upcoming Badge */}
                     <div className="w-full flex items-center justify-between mb-3">
-                      <div className={`w-11 h-11 rounded-2xl flex items-center justify-center transition-all shadow-sm ${
-                        hasData 
-                          ? 'bg-gradient-to-tr from-indigo-600 to-purple-600 text-white group-hover:scale-105' 
-                          : 'bg-slate-200/80 text-slate-400'
-                      }`}>
+                      <div className="w-11 h-11 rounded-2xl bg-slate-200 text-slate-400 flex items-center justify-center">
                         <Folder className="w-6 h-6" />
                       </div>
-                      <span className={`text-[10px] font-black px-2.5 py-0.5 rounded-full border ${
-                        hasData 
-                          ? 'bg-emerald-100 text-emerald-800 border-emerald-200' 
-                          : 'bg-slate-100 text-slate-400 border-slate-200 font-semibold'
-                      }`}>
-                        {hasData ? 'Active Data' : 'Upcoming'}
+                      <span className="text-[10px] font-extrabold px-2.5 py-1 rounded-full bg-slate-200 text-slate-500 border border-slate-300">
+                        ⏳ Scheduled
                       </span>
                     </div>
 
-                    <h3 className={`text-xl font-black tracking-tight ${hasData ? 'text-slate-900 group-hover:text-indigo-700' : 'text-slate-500'}`}>
+                    <h3 className="text-xl font-bold tracking-tight text-slate-400 group-hover:text-slate-600">
                       {mf.label}
                     </h3>
 
-                    {stats && (
-                      <div className="mt-2 space-y-1 w-full">
-                        <p className={`text-sm font-extrabold ${hasData ? 'text-indigo-950' : 'text-slate-400 font-bold'}`}>
-                          {fmtNum(stats.patients)} patients
-                        </p>
-                        <p className={`text-xs font-bold px-2 py-0.5 rounded-md border inline-block ${
-                          hasData 
-                            ? 'text-slate-700 bg-white/90 border-slate-200/90 shadow-sm' 
-                            : 'text-slate-400 bg-slate-100 border-slate-200/60'
-                        }`}>
-                          {fmtNum(stats.dcm)} DCM · {fmtNum(stats.pdf)} PDF
-                        </p>
-                      </div>
-                    )}
+                    <div className="mt-2 space-y-1 w-full">
+                      <p className="text-sm font-bold text-slate-400">
+                        0 patients
+                      </p>
+                      <p className="text-xs font-semibold text-slate-400 bg-slate-200/60 px-2 py-0.5 rounded-md inline-block">
+                        0 DCM · 0 PDF
+                      </p>
+                    </div>
 
-                    <div className={`mt-3 flex items-center gap-1 text-[10px] font-extrabold ${hasData ? 'text-indigo-600 opacity-0 group-hover:opacity-100' : 'text-slate-400 opacity-0 group-hover:opacity-75'} transition-opacity`}>
-                      <span>Open</span><ChevronRight className="w-3 h-3" />
+                    <div className="mt-3 flex items-center gap-1 text-[10px] font-bold text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <span>No files yet</span><ChevronRight className="w-3 h-3" />
                     </div>
                   </motion.button>
                 )
