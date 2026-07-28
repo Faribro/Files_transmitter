@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Folder, FileText, Image as ImageIcon, Search, ChevronRight, HardDrive, Download, ExternalLink, ArrowLeft, RefreshCw, CheckCircle, AlertTriangle, Flame } from 'lucide-react'
 import DicomViewer from './DicomViewer'
+import PdfReportViewer from './PdfReportViewer'
 import AsciiFireEffect from './AsciiFireEffect'
 
 interface DriveItem {
@@ -450,21 +451,11 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
 
                   {patientFiles.pdf ? (
                     <div className="space-y-4">
-                      {/* PDF Embed / Preview Container */}
-                      <div className="h-64 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-center overflow-hidden">
-                        {patientFiles.pdf.azure_url ? (
-                          <iframe
-                            src={`https://docs.google.com/gview?url=${encodeURIComponent(patientFiles.pdf.azure_url)}&embedded=true`}
-                            className="w-full h-full border-0 rounded-2xl"
-                            title="Diagnostic Report"
-                          />
-                        ) : (
-                          <div className="text-center">
-                            <FileText className="w-10 h-10 text-indigo-600 mx-auto mb-2" />
-                            <p className="text-xs font-black text-slate-800">{patientFiles.pdf.name}</p>
-                          </div>
-                        )}
-                      </div>
+                      {/* Interactive Zoomable PDF Report Viewer */}
+                      <PdfReportViewer 
+                        fileUrl={patientFiles.pdf.azure_url || `/api/v1/files/${patientFiles.pdf.id}/content`} 
+                        filename={patientFiles.pdf.name} 
+                      />
                       <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/80 text-xs space-y-1.5">
                         <div className="flex justify-between"><span className="text-slate-500 font-bold">Filename:</span><span className="font-black text-slate-800 truncate max-w-[200px]">{patientFiles.pdf.name}</span></div>
                         <div className="flex justify-between"><span className="text-slate-500 font-bold">File Size:</span><span className="font-black text-slate-800">{(patientFiles.pdf.size_bytes / 1024).toFixed(1)} KB</span></div>
