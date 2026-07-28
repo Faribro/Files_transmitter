@@ -167,8 +167,14 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
     fetch(`/api/v1/patients?facility=${encodeURIComponent(facility)}&month=${encodeURIComponent(selectedMonth)}`)
       .then(res => res.json())
       .then(data => {
-        setDateList(data.dates || [])
+        const dates: DateItem[] = data.dates || []
+        setDateList(dates)
         setLoading(false)
+
+        // SMART AUTO-SKIP: If month has only 1 date directory, auto-select it immediately!
+        if (dates.length === 1) {
+          setSelectedDate(dates[0].date)
+        }
       })
       .catch(err => {
         console.error('Failed to load dates:', err)
@@ -186,8 +192,14 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
     fetch(`/api/v1/patients?facility=${encodeURIComponent(facility)}&month=${encodeURIComponent(selectedMonth)}&date=${encodeURIComponent(selectedDate)}`)
       .then(res => res.json())
       .then(data => {
-        setFacilityList(data.facilities || [])
+        const facs: FacilityItem[] = data.facilities || []
+        setFacilityList(facs)
         setLoading(false)
+
+        // SMART AUTO-SKIP: If date has only 1 facility, auto-select it immediately!
+        if (facs.length === 1) {
+          setSelectedFacility(facs[0].facility)
+        }
       })
       .catch(err => {
         console.error('Failed to load facilities:', err)
@@ -503,8 +515,8 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-100">
               <div className="flex items-center gap-3">
-                <button onClick={() => setSelectedDate(null)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors">
-                  <ArrowLeft className="w-3.5 h-3.5" /> Back to Dates
+                <button onClick={() => { setSelectedDate(null); setSelectedMonth(null); }} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors">
+                  <ArrowLeft className="w-3.5 h-3.5" /> Back to Months
                 </button>
                 <p className="text-xs font-bold text-slate-600">
                   {fmtNum(facilityList.reduce((a, b) => a + b.total_patients, 0))} patient folders · showing {fmtNum(facilityList.length)} facilities
