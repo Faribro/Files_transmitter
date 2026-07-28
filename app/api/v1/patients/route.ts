@@ -14,9 +14,12 @@ export async function GET(request: NextRequest) {
   try {
     const allDates = Object.keys(HIERARCHY_DATA).sort().reverse()
 
-    // 1. If month requested (e.g. '2026-01'), return dates belonging to that month
+    // 1. If month requested (e.g. '2026-01'), return dates belonging to that month (DD-MM-YY format)
     if (monthParam && !dateParam) {
-      const monthDates = allDates.filter(d => d.startsWith(monthParam))
+      const parts = monthParam.split('-')
+      const mNum = parts[1] || '01'
+      const mYear = parts[0] ? parts[0].slice(-2) : '26'
+      const monthDates = allDates.filter(d => d.includes(`-${mNum}-${mYear}`) || d.includes(`-${mNum}-`) || d.startsWith(monthParam))
       const dateList = monthDates.map(d => {
         const facs = HIERARCHY_DATA[d] || {}
         let sCnt = 0
