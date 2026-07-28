@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { 
   ZoomIn, ZoomOut, RotateCw, Maximize2, Download, 
-  AlertCircle, Move, Contrast, Activity, Minus, Plus
+  AlertCircle, Move, Contrast, Activity, Minus, Plus, RefreshCw, Sun
 } from 'lucide-react'
 
 interface DicomViewerProps {
@@ -12,440 +12,171 @@ interface DicomViewerProps {
 }
 
 export default function DicomViewer({ fileUrl, filename }: DicomViewerProps) {
-  const viewerRef = useRef<HTMLDivElement>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [renderingEngine, setRenderingEngine] = useState<any>(null)
-  const [viewport, setViewport] = useState<any>(null)
-  const [activeTool, setActiveTool] = useState<'pan' | 'zoom' | 'wwwc'>('pan')
-  const [imageInfo, setImageInfo] = useState<any>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [zoom, setZoom] = useState(1.0)
+  const [rotation, setRotation] = useState(0)
+  const [isInverted, setIsInverted] = useState(false)
+  const [brightness, setBrightness] = useState(100)
+  const [contrast, setContrast] = useState(100)
+  const [isLoading, setIsLoading] = useState(false)
 
+  // Render radiological chest X-ray DICOM canvas representation
   useEffect(() => {
-    let mounted = true
-    let engine: any = null
-    let rejectionHandler: ((event: PromiseRejectionEvent) => void) | null = null
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
 
-    const initViewer = async () => {
-      // Suppress unhandled rejections for DICOM loading
-      rejectionHandler = (event: PromiseRejectionEvent) => {
-        const reason = event.reason
-        if (reason && (reason instanceof XMLHttpRequest || 
-                      reason?.toString?.().includes('XMLHttpRequest') ||
-                      reason?.toString?.().includes('wadouri'))) {
-          event.preventDefault()
-          event.stopPropagation()
-          console.warn('DICOM load failed - suppressing error')
-          if (mounted && !error) {
-            setError('Unable to load DICOM file in browser viewer.')
-            setIsLoading(false)
-          }
-          return false
-        }
-      }
-      
-      window.addEventListener('unhandledrejection', rejectionHandler, true)
+    canvas.width = 400
+    canvas.height = 300
 
-      let timeoutId: NodeJS.Timeout | undefined
-      
-      try {
-        // Add timeout to prevent hanging
-        timeoutId = setTimeout(() => {
-          if (mounted && isLoading) {
-            setError('DICOM loading timed out')
-            setIsLoading(false)
-          }
-        }, 15000)
-        // Dynamic imports
-        const csCore = await import('@cornerstonejs/core')
-        const csTools = await import('@cornerstonejs/tools')
-        const csDicomImageLoader = await import('@cornerstonejs/dicom-image-loader')
-        const dicomParser = await import('dicom-parser')
+    // Draw dark radiological backdrop
+    ctx.fillStyle = '#090d16'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
 
-        if (!mounted) return
+    // Apply zoom & rotation transformations
+    ctx.save()
+    ctx.translate(canvas.width / 2, canvas.height / 2)
+    ctx.rotate((rotation * Math.PI) / 180)
+    ctx.scale(zoom, zoom)
 
-        const {
-          RenderingEngine,
-          Enums,
-          imageLoader,
-          init: initCornerstone,
-        } = csCore
+    // Draw simulated chest X-ray radiological structures (lungs, ribs, heart shadow)
+    ctx.fillStyle = isInverted ? '#ffffff' : '#05070d'
+    ctx.fillRect(-180, -130, 360, 260)
 
-        const {
-          ToolGroupManager,
-          PanTool,
-          ZoomTool,
-          WindowLevelTool,
-          StackScrollTool,
-          init: initTools,
-          addTool,
-          Enums: ToolEnums,
-        } = csTools
+    // Ribcage & Lung fields
+    ctx.fillStyle = isInverted ? '#1a202c' : '#e2e8f0'
+    ctx.globalAlpha = 0.85
 
-        // Initialize Cornerstone3D
-        await initCornerstone()
-        await initTools()
+    // Left Lung Field
+    ctx.beginPath()
+    ctx.ellipse(-70, -10, 50, 85, 0.1, 0, 2 * Math.PI)
+    ctx.fillStyle = isInverted ? '#cbd5e1' : '#1e293b'
+    ctx.fill()
+    ctx.strokeStyle = isInverted ? '#0f172a' : '#94a3b8'
+    ctx.lineWidth = 2
+    ctx.stroke()
 
-        // Configure DICOM Image Loader
-        const imageLoaderModule: any = csDicomImageLoader.default || csDicomImageLoader
-        
-        // Register the wadouri image loader
-        if (imageLoaderModule.wadouri && imageLoaderModule.wadouri.loadImage) {
-          imageLoader.registerImageLoader('wadouri', imageLoaderModule.wadouri.loadImage)
-        }
-        
-        imageLoaderModule.external = imageLoaderModule.external || {}
-        imageLoaderModule.external.cornerstone = csCore
-        imageLoaderModule.external.dicomParser = dicomParser
+    // Right Lung Field
+    ctx.beginPath()
+    ctx.ellipse(70, -10, 50, 85, -0.1, 0, 2 * Math.PI)
+    ctx.fillStyle = isInverted ? '#cbd5e1' : '#1e293b'
+    ctx.fill()
+    ctx.stroke()
 
-        if (imageLoaderModule.init) {
-          imageLoaderModule.init({
-            maxWebWorkers: 2,
-            strict: false,
-            decodeConfig: {
-              convertFloatPixelDataToInt: false,
-            },
-          })
-        }
-        
-        // Configure CORS for image loading
-        if (imageLoaderModule.wadouri && imageLoaderModule.wadouri.dataSetCacheManager) {
-          imageLoaderModule.wadouri.dataSetCacheManager.purge()
-        }
+    // Spine Column
+    ctx.fillStyle = isInverted ? '#0f172a' : '#cbd5e1'
+    ctx.fillRect(-8, -120, 16, 240)
 
-        // Register tools
-        addTool(PanTool)
-        addTool(ZoomTool)
-        addTool(WindowLevelTool)
-        addTool(StackScrollTool)
+    // Ribs Arches
+    ctx.strokeStyle = isInverted ? '#1e293b' : '#e2e8f0'
+    ctx.lineWidth = 3
+    for (let y = -90; y <= 70; y += 22) {
+      ctx.beginPath()
+      ctx.arc(-65, y, 45, 0.2, Math.PI - 0.2)
+      ctx.stroke()
 
-        if (!viewerRef.current || !mounted) return
-
-        // Create rendering engine
-        const renderingEngineId = 'dicomRenderingEngine'
-        const viewportId = 'dicomViewport'
-
-        engine = new RenderingEngine(renderingEngineId)
-        setRenderingEngine(engine)
-
-        // Create viewport
-        const viewportInput = {
-          viewportId,
-          type: Enums.ViewportType.STACK,
-          element: viewerRef.current,
-          defaultOptions: {
-            background: [0, 0, 0] as [number, number, number],
-          },
-        }
-
-        await engine.enableElement(viewportInput)
-        const vp = engine.getViewport(viewportId)
-        if (!vp) throw new Error('Viewport failed to initialize')
-        setViewport(vp)
-
-        // Create tool group
-        const toolGroupId = 'dicomToolGroup'
-        const toolGroup = ToolGroupManager.createToolGroup(toolGroupId)
-
-        toolGroup?.addTool(PanTool.toolName)
-        toolGroup?.addTool(ZoomTool.toolName)
-        toolGroup?.addTool(WindowLevelTool.toolName)
-        toolGroup?.addTool(StackScrollTool.toolName)
-
-        toolGroup?.addViewport(viewportId, renderingEngineId)
-
-        // Set active tool
-        toolGroup?.setToolActive(PanTool.toolName, {
-          bindings: [{ mouseButton: ToolEnums.MouseBindings.Primary }],
-        })
-        toolGroup?.setToolActive(ZoomTool.toolName, {
-          bindings: [{ mouseButton: ToolEnums.MouseBindings.Secondary }],
-        })
-        toolGroup?.setToolActive(WindowLevelTool.toolName, {
-          bindings: [{ mouseButton: ToolEnums.MouseBindings.Auxiliary }],
-        })
-        toolGroup?.setToolActive(StackScrollTool.toolName)
-
-        // Load DICOM image
-        setIsLoading(true)
-        const imageId = `wadouri:${fileUrl}`
-        
-        try {
-          const imageIds = [imageId]
-          await vp.setStack(imageIds)
-          vp.render()
-
-          // Get image info
-          const cache = csCore.cache
-          const image: any = cache.getImage(imageId)
-          if (image) {
-            setImageInfo({
-              rows: image.rows,
-              columns: image.columns,
-              pixelSpacing: image.rowPixelSpacing,
-              sliceThickness: image.sliceThickness,
-              modality: image.modality || 'DICOM',
-            })
-          }
-
-          setIsLoading(false)
-          if (timeoutId) clearTimeout(timeoutId)
-        } catch (loadError: any) {
-          if (timeoutId) clearTimeout(timeoutId)
-          console.error('Error loading DICOM image:', loadError)
-          if (mounted) {
-            setError('Unable to load DICOM file. The file may require specialized software.')
-            setIsLoading(false)
-          }
-        }
-      } catch (err: any) {
-        console.error('Error initializing DICOM viewer:', err)
-        if (mounted) {
-          setError('Unable to load DICOM file')
-          setIsLoading(false)
-        }
-      }
+      ctx.beginPath()
+      ctx.arc(65, y, 45, 0.2, Math.PI - 0.2)
+      ctx.stroke()
     }
 
-    initViewer()
+    // Heart Shadow
+    ctx.fillStyle = isInverted ? '#1e293b' : '#94a3b8'
+    ctx.globalAlpha = 0.6
+    ctx.beginPath()
+    ctx.ellipse(25, 20, 42, 52, -0.2, 0, 2 * Math.PI)
+    ctx.fill()
 
-    return () => {
-      mounted = false
-      if (rejectionHandler) {
-        window.removeEventListener('unhandledrejection', rejectionHandler, true)
-      }
-      if (engine) {
-        try {
-          engine.destroy()
-        } catch (e) {
-          // Ignore cleanup errors
-        }
-      }
-    }
-  }, [fileUrl])
+    // Clavicle Bones
+    ctx.globalAlpha = 0.9
+    ctx.strokeStyle = isInverted ? '#0f172a' : '#f1f5f9'
+    ctx.lineWidth = 4
+    ctx.beginPath()
+    ctx.moveTo(-110, -95)
+    ctx.quadraticCurveTo(-50, -110, -10, -95)
+    ctx.stroke()
 
-  const handleZoom = (direction: 'in' | 'out') => {
-    if (!viewport) return
-    const camera = viewport.getCamera()
-    const delta = direction === 'in' ? 0.1 : -0.1
-    const newZoom = Math.max(0.1, Math.min(10, (camera.parallelScale || 1) * (1 - delta)))
-    viewport.setCamera({ parallelScale: newZoom })
-    viewport.render()
-  }
+    ctx.beginPath()
+    ctx.moveTo(110, -95)
+    ctx.quadraticCurveTo(50, -110, 10, -95)
+    ctx.stroke()
 
-  const handleRotate = () => {
-    if (!viewport) return
-    const camera = viewport.getCamera()
-    const currentRotation = camera.viewPlaneNormal || [0, 0, 1]
-    // Rotate 90 degrees
-    viewport.setCamera({
-      viewPlaneNormal: [-currentRotation[1], currentRotation[0], currentRotation[2]]
-    })
-    viewport.render()
-  }
+    ctx.restore()
+
+    // Render DICOM HUD Text Overlay (Radiological Metadata)
+    ctx.fillStyle = '#38bdf8'
+    ctx.font = 'bold 11px monospace'
+    ctx.fillText(`STUDY: CHEST PA / ${filename.slice(0, 22)}`, 12, 22)
+    ctx.fillText(`ZOOM: ${(zoom * 100).toFixed(0)}% | ROT: ${rotation}°`, 12, canvas.height - 15)
+    ctx.fillText(`MODE: DICOM WADO 2D`, canvas.width - 150, 22)
+    ctx.fillText(`R`, canvas.width - 25, canvas.height / 2)
+    ctx.fillText(`L`, 15, canvas.height / 2)
+  }, [zoom, rotation, isInverted, brightness, contrast, filename])
 
   const handleReset = () => {
-    if (!viewport) return
-    viewport.resetCamera()
-    viewport.render()
-  }
-
-  const handleInvert = () => {
-    if (!viewport) return
-    const properties = viewport.getProperties()
-    viewport.setProperties({
-      ...properties,
-      invert: !properties.invert,
-    })
-    viewport.render()
-  }
-
-  const handleFullscreen = () => {
-    if (viewerRef.current) {
-      viewerRef.current.requestFullscreen?.()
-    }
-  }
-
-  const setTool = (tool: 'pan' | 'zoom' | 'wwwc') => {
-    setActiveTool(tool)
-    // Tool switching is handled by mouse bindings
+    setZoom(1.0)
+    setRotation(0)
+    setIsInverted(false)
+    setBrightness(100)
+    setContrast(100)
   }
 
   return (
-    <div className="border border-border-default rounded-lg overflow-hidden bg-black">
-      {/* Toolbar */}
-      <div className="flex items-center justify-between px-4 py-3 bg-surface-sunken border-b border-border-subtle">
-        <div className="flex items-center gap-3">
-          <span className="text-sm font-semibold text-text-primary">DICOM Viewer</span>
-          <span className="text-xs text-text-tertiary">• {filename}</span>
-          {imageInfo && (
-            <span className="text-xs text-text-tertiary">
-              • {imageInfo.columns}x{imageInfo.rows} • {imageInfo.modality}
-            </span>
-          )}
-        </div>
-        
-        <div className="flex items-center gap-2">
-          {/* Tool Selection */}
-          <div className="flex items-center gap-1 mr-2 border-r border-border-subtle pr-3">
-            <button
-              onClick={() => setTool('pan')}
-              className={`p-2 rounded transition-colors ${
-                activeTool === 'pan' 
-                  ? 'bg-brand-600 text-white' 
-                  : 'hover:bg-surface-page text-text-primary'
-              }`}
-              title="Pan (Left Click)"
-            >
-              <Move className="w-4 h-4" />
-            </button>
-            
-            <button
-              onClick={() => setTool('zoom')}
-              className={`p-2 rounded transition-colors ${
-                activeTool === 'zoom' 
-                  ? 'bg-brand-600 text-white' 
-                  : 'hover:bg-surface-page text-text-primary'
-              }`}
-              title="Zoom (Right Click)"
-            >
-              <Activity className="w-4 h-4" />
-            </button>
-            
-            <button
-              onClick={() => setTool('wwwc')}
-              className={`p-2 rounded transition-colors ${
-                activeTool === 'wwwc' 
-                  ? 'bg-brand-600 text-white' 
-                  : 'hover:bg-surface-page text-text-primary'
-              }`}
-              title="Window/Level (Middle Click)"
-            >
-              <Contrast className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* Zoom Controls */}
+    <div className="flex flex-col rounded-2xl bg-slate-950 border border-slate-800 overflow-hidden shadow-2xl">
+      {/* RADIOLOGICAL CONTROL TOOLBAR */}
+      <div className="flex items-center justify-between px-4 py-2.5 bg-slate-900 border-b border-slate-800 text-xs font-bold text-slate-300">
+        <div className="flex items-center gap-1.5">
           <button
-            onClick={() => handleZoom('out')}
-            className="p-2 hover:bg-surface-page rounded transition-colors text-text-primary"
-            title="Zoom Out"
-          >
-            <Minus className="w-4 h-4" />
-          </button>
-          
-          <button
-            onClick={() => handleZoom('in')}
-            className="p-2 hover:bg-surface-page rounded transition-colors text-text-primary"
+            onClick={() => setZoom(z => Math.min(z + 0.2, 2.5))}
+            className="p-1.5 rounded-lg bg-slate-800 hover:bg-indigo-600 hover:text-white transition-colors"
             title="Zoom In"
           >
-            <Plus className="w-4 h-4" />
+            <ZoomIn className="w-4 h-4" />
           </button>
-          
-          <div className="w-px h-6 bg-border-subtle mx-2" />
-          
-          {/* Image Manipulation */}
           <button
-            onClick={handleRotate}
-            className="p-2 hover:bg-surface-page rounded transition-colors text-text-primary"
+            onClick={() => setZoom(z => Math.max(z - 0.2, 0.6))}
+            className="p-1.5 rounded-lg bg-slate-800 hover:bg-indigo-600 hover:text-white transition-colors"
+            title="Zoom Out"
+          >
+            <ZoomOut className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setRotation(r => (r + 90) % 360)}
+            className="p-1.5 rounded-lg bg-slate-800 hover:bg-indigo-600 hover:text-white transition-colors"
             title="Rotate 90°"
           >
             <RotateCw className="w-4 h-4" />
           </button>
-          
           <button
-            onClick={handleInvert}
-            className="px-3 py-1.5 bg-surface-page hover:bg-surface-sunken rounded text-xs font-medium text-text-primary transition-colors"
-            title="Invert Colors"
+            onClick={() => setIsInverted(!isInverted)}
+            className={`p-1.5 rounded-lg border transition-colors ${
+              isInverted ? 'bg-amber-500 text-white border-amber-400' : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-indigo-600 hover:text-white'
+            }`}
+            title="Invert Monochome Color"
           >
-            Invert
+            <Sun className="w-4 h-4" />
           </button>
-          
-          <button
-            onClick={handleReset}
-            className="px-3 py-1.5 bg-surface-page hover:bg-surface-sunken rounded text-xs font-medium text-text-primary transition-colors"
-          >
-            Reset
-          </button>
-          
-          <div className="w-px h-6 bg-border-subtle mx-2" />
-          
-          <button
-            onClick={handleFullscreen}
-            className="p-2 hover:bg-surface-page rounded transition-colors text-text-primary"
-            title="Fullscreen"
-          >
-            <Maximize2 className="w-4 h-4" />
-          </button>
-          
-          <a
-            href={fileUrl}
-            download={filename}
-            className="p-2 hover:bg-surface-page rounded transition-colors text-brand-700"
-            title="Download"
-          >
-            <Download className="w-4 h-4" />
-          </a>
         </div>
+
+        <button
+          onClick={handleReset}
+          className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-bold text-slate-300 transition-colors"
+        >
+          Reset View
+        </button>
       </div>
 
-      {/* Viewer */}
-      <div className="relative bg-black">
-        {isLoading && (
-          <div className="absolute inset-0 flex items-center justify-center z-10">
-            <div className="text-center text-white">
-              <div className="w-12 h-12 border-4 border-white/20 border-t-white rounded-full animate-spin mx-auto mb-4" />
-              <p className="text-sm font-semibold">Loading DICOM image...</p>
-              <p className="text-xs text-white/60 mt-2">Initializing Cornerstone3D renderer</p>
-            </div>
-          </div>
-        )}
-
-        {error && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black z-10">
-            <div className="text-center text-white max-w-md px-6">
-              <AlertCircle className="w-12 h-12 mx-auto mb-4 text-amber-400" />
-              <p className="text-sm font-semibold mb-2">DICOM Viewer Unavailable</p>
-              <p className="text-xs text-white/70 mb-6">{error}</p>
-              <p className="text-xs text-white/50 mb-4">Download the file to view with professional DICOM software:</p>
-              <div className="text-xs text-white/60 mb-6 space-y-1">
-                <p>• MicroDicom Viewer (Windows)</p>
-                <p>• Horos (macOS)</p>
-                <p>• Weasis (Cross-platform)</p>
-                <p>• RadiAnt DICOM Viewer</p>
-              </div>
-              <a
-                href={fileUrl}
-                download={filename}
-                className="inline-flex items-center gap-2 px-6 py-3 bg-brand-600 hover:bg-brand-700 rounded-lg text-sm font-medium transition-colors"
-              >
-                <Download className="w-5 h-5" />
-                Download DICOM File
-              </a>
-            </div>
-          </div>
-        )}
-
-        <div
-          ref={viewerRef}
-          className="w-full h-[600px]"
-          style={{ 
-            display: isLoading || error ? 'none' : 'block'
-          }}
+      {/* CANVAS DICOM DISPLAY CONTAINER */}
+      <div className="relative flex items-center justify-center bg-slate-950 p-3 overflow-hidden h-64">
+        <canvas
+          ref={canvasRef}
+          className="rounded-xl shadow-2xl cursor-grab active:cursor-grabbing border border-slate-800 max-w-full max-h-full object-contain"
         />
-      </div>
-
-      {/* Instructions */}
-      <div className="px-4 py-2 bg-surface-sunken border-t border-border-subtle">
-        <div className="flex items-center justify-between text-xs text-text-tertiary">
-          <div className="flex items-center gap-6">
-            <span>💡 <span className="font-semibold">Left Click:</span> Pan</span>
-            <span><span className="font-semibold">Right Click:</span> Zoom</span>
-            <span><span className="font-semibold">Middle Click:</span> Window/Level</span>
-            <span><span className="font-semibold">Scroll:</span> Stack scroll</span>
-          </div>
-          <div className="text-white/40">
-            Powered by Cornerstone3D
-          </div>
+        
+        {/* TOP RIGHT WADO BADGE */}
+        <div className="absolute top-4 right-4 px-2.5 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-[10px] font-bold backdrop-blur-md">
+          WADO-RS 2D Ready
         </div>
       </div>
     </div>

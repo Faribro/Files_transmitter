@@ -454,8 +454,8 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
                       <div className="h-64 rounded-2xl bg-slate-50 border border-slate-200/80 flex items-center justify-center overflow-hidden">
                         {patientFiles.pdf.azure_url ? (
                           <iframe
-                            src={patientFiles.pdf.azure_url}
-                            className="w-full h-full border-0"
+                            src={`https://docs.google.com/gview?url=${encodeURIComponent(patientFiles.pdf.azure_url)}&embedded=true`}
+                            className="w-full h-full border-0 rounded-2xl"
                             title="Diagnostic Report"
                           />
                         ) : (
