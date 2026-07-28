@@ -378,7 +378,7 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
                   <ArrowLeft className="w-3.5 h-3.5" /> Back to Months
                 </button>
                 <p className="text-xs font-bold text-slate-600">
-                  {fmtNum(monthStatObj?.patients || dateList.reduce((a, b) => a + b.total_patients, 0))} patient folders · showing {fmtNum(dateList.length)} date directories
+                  {fmtNum(dateList.reduce((a, b) => a + b.total_patients, 0))} patient folders · showing {fmtNum(dateList.length)} date directories
                   {monthStatObj && ` · ${fmtNum(monthStatObj.dcm)} DCM · ${fmtNum(monthStatObj.pdf)} PDF`}
                 </p>
               </div>
