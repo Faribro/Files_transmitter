@@ -81,7 +81,7 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // 3. Level 3: Date & Subfacility requested -> Dynamic Infinite Scroll Pagination for ALL patient folders
+    // 3. Level 3: Date & Subfacility requested -> 100% REAL AUTHENTIC PATIENTS ONLY (Zero Synthetic Generator)
     if (monthParam && dateParam && subFacParam) {
       const monthObj = parentObj[monthParam] || {}
       const dateObj = monthObj[dateParam] || {}
@@ -90,106 +90,23 @@ export async function GET(request: NextRequest) {
       const rawSuspected: any[] = fObj['Suspected'] || []
       const rawNotSuspected: any[] = fObj['Not Suspected'] || []
 
-      const totalCount = fObj?.['total_count'] ?? (rawSuspected.length + rawNotSuspected.length)
-      const suspectedCount = fObj?.['suspected_count'] ?? rawSuspected.length
-      const notSuspectedCount = totalCount - suspectedCount
-
-      const cleanDate = dateParam ? dateParam.replace(/-/g, '') : '150126'
-      const prefix = fObj?.['prefix'] || `${facilityParam.slice(0, 3)}_${subFacParam.slice(0, 3).toUpperCase()}`
-
       let fullList: any[] = []
 
-      // If status filter is 'Suspected'
+      // If status filter is 'Suspected' -> Return ONLY real suspected patient records
       if (statusParam === 'Suspected') {
-        const count = suspectedCount
-        for (let i = 1; i <= count; i++) {
-          if (i <= rawSuspected.length) {
-            fullList.push(rawSuspected[i - 1])
-          } else {
-            const padStr = String(i).padStart(4, '0')
-            const pid = `${prefix}_${cleanDate}_${padStr}`
-            fullList.push({
-              patient_id: pid,
-              parent_facility: facilityParam,
-              month: monthParam,
-              date: dateParam,
-              facility: subFacParam,
-              status: 'Suspected',
-              dcm_count: 1,
-              pdf_count: 1,
-              total_size: 1150000 + (i * 90),
-              dcm_url: `https://storageaccountprision.blob.core.windows.net/containerprision/Prison_and_OCS_Intervention/Medical_Files/${facilityParam}/${monthParam}/${dateParam}/${pid}/CHEST_PA_${pid}.dcm`,
-              pdf_url: `https://storageaccountprision.blob.core.windows.net/containerprision/Prison_and_OCS_Intervention/Medical_Files/${facilityParam}/${monthParam}/${dateParam}/${pid}/${pid}.pdf`,
-              dcm_name: `CHEST_PA_${pid}.dcm`,
-              pdf_name: `${pid}.pdf`
-            })
-          }
-        }
+        fullList = rawSuspected
       }
-      // If status filter is 'Not Suspected'
+      // If status filter is 'Not Suspected' -> Return ONLY real not-suspected patient records
       else if (statusParam === 'Not Suspected') {
-        const count = notSuspectedCount
-        for (let i = 1; i <= count; i++) {
-          const idx = i + suspectedCount
-          if (i <= rawNotSuspected.length) {
-            fullList.push(rawNotSuspected[i - 1])
-          } else {
-            const padStr = String(idx).padStart(4, '0')
-            const pid = `${prefix}_${cleanDate}_${padStr}`
-            const hasPdf = (i % 6 !== 0)
-            fullList.push({
-              patient_id: pid,
-              parent_facility: facilityParam,
-              month: monthParam,
-              date: dateParam,
-              facility: subFacParam,
-              status: 'Not Suspected',
-              dcm_count: 1,
-              pdf_count: hasPdf ? 1 : 0,
-              total_size: 1150000 + (idx * 90),
-              dcm_url: `https://storageaccountprision.blob.core.windows.net/containerprision/Prison_and_OCS_Intervention/Medical_Files/${facilityParam}/${monthParam}/${dateParam}/${pid}/CHEST_PA_${pid}.dcm`,
-              pdf_url: hasPdf ? `https://storageaccountprision.blob.core.windows.net/containerprision/Prison_and_OCS_Intervention/Medical_Files/${facilityParam}/${monthParam}/${dateParam}/${pid}/${pid}.pdf` : null,
-              dcm_name: `CHEST_PA_${pid}.dcm`,
-              pdf_name: hasPdf ? `${pid}.pdf` : null
-            })
-          }
-        }
+        fullList = rawNotSuspected
       }
-      // 'all' filter
+      // 'all' filter -> Combine real suspected first, then real not-suspected
       else {
-        for (let i = 1; i <= totalCount; i++) {
-          const isSusp = (i <= suspectedCount)
-          const status = isSusp ? 'Suspected' : 'Not Suspected'
-          const padStr = String(i).padStart(4, '0')
-          const pid = `${prefix}_${cleanDate}_${padStr}`
-
-          if (isSusp && i <= rawSuspected.length) {
-            fullList.push(rawSuspected[i - 1])
-          } else if (!isSusp && (i - suspectedCount) <= rawNotSuspected.length) {
-            fullList.push(rawNotSuspected[i - 1 - suspectedCount])
-          } else {
-            const hasPdf = isSusp || (i % 6 !== 0)
-            fullList.push({
-              patient_id: pid,
-              parent_facility: facilityParam,
-              month: monthParam,
-              date: dateParam,
-              facility: subFacParam,
-              status,
-              dcm_count: 1,
-              pdf_count: hasPdf ? 1 : 0,
-              total_size: 1150000 + (i * 90),
-              dcm_url: `https://storageaccountprision.blob.core.windows.net/containerprision/Prison_and_OCS_Intervention/Medical_Files/${facilityParam}/${monthParam}/${dateParam}/${pid}/CHEST_PA_${pid}.dcm`,
-              pdf_url: hasPdf ? `https://storageaccountprision.blob.core.windows.net/containerprision/Prison_and_OCS_Intervention/Medical_Files/${facilityParam}/${monthParam}/${dateParam}/${pid}/${pid}.pdf` : null,
-              dcm_name: `CHEST_PA_${pid}.dcm`,
-              pdf_name: hasPdf ? `${pid}.pdf` : null
-            })
-          }
-        }
+        fullList = [...rawSuspected, ...rawNotSuspected]
       }
 
       const paginated = fullList.slice(offset, offset + limit)
-      const currentTotal = statusParam === 'Suspected' ? suspectedCount : (statusParam === 'Not Suspected' ? notSuspectedCount : totalCount)
+      const currentTotal = fullList.length
 
       return NextResponse.json({
         facility: facilityParam,
@@ -198,8 +115,8 @@ export async function GET(request: NextRequest) {
         subfacility: subFacParam,
         patients: paginated,
         total: currentTotal,
-        suspected_count: suspectedCount,
-        not_suspected_count: notSuspectedCount,
+        suspected_count: rawSuspected.length,
+        not_suspected_count: rawNotSuspected.length,
         page,
         limit,
         has_more: offset + paginated.length < currentTotal
