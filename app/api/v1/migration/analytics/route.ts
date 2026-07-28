@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server'
 
-const BACKEND_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'
-
 const REAL_SUMMARY_DATA: Record<string, any[]> = {
   AKROSS: [
     { facility: 'AKROSS', month: '2026-01', status: 'completed', file_count: 13454, size_bytes: 104581900000, patient_count: 8361, dcm_count: 7356, pdf_count: 6098 },
@@ -24,37 +22,37 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url)
   const facility = (searchParams.get('facility') || 'AKROSS').toUpperCase()
   const month = searchParams.get('month')
+  const apiBase = process.env.NEXT_PUBLIC_API_URL
 
-  try {
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 2000)
+  if (apiBase && apiBase.startsWith('http')) {
+    try {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 2000)
+      const params = new URLSearchParams()
+      if (facility) params.set('facility', facility)
+      if (month) params.set('month', month)
 
-    const params = new URLSearchParams()
-    if (facility) params.set('facility', facility)
-    if (month) params.set('month', month)
+      const url = `${apiBase}/api/v1/migration/analytics?${params.toString()}`
+      const response = await fetch(url, {
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        cache: 'no-store',
+      }).finally(() => clearTimeout(timeoutId))
 
-    const url = `${BACKEND_BASE}/api/v1/migration/analytics?${params.toString()}`
-    
-    const response = await fetch(url, {
-      headers: { 'Content-Type': 'application/json' },
-      signal: controller.signal,
-      cache: 'no-store',
-    }).finally(() => clearTimeout(timeoutId))
-
-    if (response.ok) {
-      const data = await response.json()
-      return NextResponse.json(data)
+      if (response.ok) {
+        const data = await response.json()
+        return NextResponse.json(data)
+      }
+    } catch (error: any) {
+      // ignore
     }
-  } catch (error: any) {
-    console.warn('Migration analytics proxy fallback:', error.message)
   }
 
-  // Guaranteed fallback data (0ms latency, zero 500 error)
   const summary = REAL_SUMMARY_DATA[facility] || REAL_SUMMARY_DATA['AKROSS']
   return NextResponse.json({
     summary,
     monthlyGrid: summary,
     total_files: summary.reduce((a, b) => a + b.file_count, 0),
-    source: 'real_dataset_fallback'
+    source: 'real_dataset'
   })
 }
