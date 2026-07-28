@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
   const offset         = (page - 1) * limit
 
   try {
-    const parentObj = HIERARCHY_DATA[facilityParam] || HIERARCHY_DATA['AKROSS'] || {}
+    const parentObj = HIERARCHY_DATA?.[facilityParam] || HIERARCHY_DATA?.['AKROSS'] || {}
 
     // 1. If month requested (e.g. '2026-01'), return dates belonging to that month under THIS facility!
     if (monthParam && !dateParam) {
@@ -112,8 +112,8 @@ export async function GET(request: NextRequest) {
   } catch (err: any) {
     console.error('Hierarchy API error:', err)
     return NextResponse.json(
-      { error: err.message || 'Failed to fetch hierarchy data' },
-      { status: 500 }
+      { facility: facilityParam, dates: [], patients: [], total: 0, warning: err.message },
+      { status: 200 }
     )
   }
 }
