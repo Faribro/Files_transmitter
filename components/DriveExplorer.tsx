@@ -105,6 +105,7 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
   const [dateList,         setDateList]         = useState<DateItem[]>([])
   const [facilityList,     setFacilityList]     = useState<FacilityItem[]>([])
   const [patientList,      setPatientList]      = useState<PatientFolder[]>([])
+  const [totalPatients,    setTotalPatients]    = useState(0)
   
   const [loading,          setLoading]          = useState(false)
   const [searchQuery,      setSearchQuery]      = useState('')
@@ -178,6 +179,7 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
         } else {
           setPatientList(prev => [...prev, ...batch])
         }
+        setTotalPatients(data.total || batch.length)
         setHasMore(data.has_more || false)
         setLoading(false)
       })
@@ -199,6 +201,8 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
   const filteredPatients = patientList.filter(p =>
     p.patient_id.toLowerCase().includes(searchQuery.toLowerCase())
   )
+
+  const monthStatObj = selectedMonth ? MONTH_STATS[facility]?.[selectedMonth] : null
 
   return (
     <div className="bg-white/80 backdrop-blur-2xl border border-white/80 rounded-3xl shadow-2xl shadow-indigo-500/10 overflow-hidden">
@@ -368,12 +372,21 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
         {/* ══════════════════════════════════════════════════════════════════ */}
         {selectedMonth && !selectedDate && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <button onClick={() => setSelectedMonth(null)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">
-                <ArrowLeft className="w-3.5 h-3.5" /> Back to Months
-              </button>
-              <p className="text-xs font-bold text-slate-500">Month: {selectedMonth}</p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <button onClick={() => setSelectedMonth(null)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors">
+                  <ArrowLeft className="w-3.5 h-3.5" /> Back to Months
+                </button>
+                <p className="text-xs font-bold text-slate-600">
+                  {fmtNum(monthStatObj?.patients || dateList.reduce((a, b) => a + b.total_patients, 0))} patient folders · showing {fmtNum(dateList.length)} date directories
+                  {monthStatObj && ` · ${fmtNum(monthStatObj.dcm)} DCM · ${fmtNum(monthStatObj.pdf)} PDF`}
+                </p>
+              </div>
+              <span className="text-xs font-black text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1 rounded-xl self-start sm:self-auto">
+                Month: {selectedMonth}
+              </span>
             </div>
+
             {loading ? (
               <div className="py-16 text-center">
                 <RefreshCw className="w-7 h-7 text-indigo-600 animate-spin mx-auto mb-2" />
@@ -410,12 +423,20 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
         {/* ══════════════════════════════════════════════════════════════════ */}
         {selectedDate && !selectedFacility && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <button onClick={() => setSelectedDate(null)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">
-                <ArrowLeft className="w-3.5 h-3.5" /> Back to Dates
-              </button>
-              <p className="text-xs font-bold text-slate-500">Date: {selectedDate}</p>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <button onClick={() => setSelectedDate(null)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors">
+                  <ArrowLeft className="w-3.5 h-3.5" /> Back to Dates
+                </button>
+                <p className="text-xs font-bold text-slate-600">
+                  {fmtNum(facilityList.reduce((a, b) => a + b.total_patients, 0))} patient folders · showing {fmtNum(facilityList.length)} facilities
+                </p>
+              </div>
+              <span className="text-xs font-black text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1 rounded-xl self-start sm:self-auto">
+                Date: {selectedDate}
+              </span>
             </div>
+
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {facilityList.map(f => (
                 <motion.button
@@ -444,11 +465,13 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
         {/* ══════════════════════════════════════════════════════════════════ */}
         {selectedDate && selectedFacility && !selectedStatus && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <button onClick={() => setSelectedFacility(null)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-100">
+              <button onClick={() => setSelectedFacility(null)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors">
                 <ArrowLeft className="w-3.5 h-3.5" /> Back to Facilities
               </button>
-              <p className="text-xs font-bold text-slate-500">{selectedDate} · {selectedFacility}</p>
+              <p className="text-xs font-bold text-slate-600">
+                {selectedDate} · {selectedFacility}
+              </p>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
               {/* 🔴 SUSPECTED FOLDER */}
@@ -489,10 +512,15 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
         {/* ══════════════════════════════════════════════════════════════════ */}
         {selectedDate && selectedFacility && selectedStatus && !selectedPatient && (
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <button onClick={() => setSelectedStatus(null)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">
-                <ArrowLeft className="w-3.5 h-3.5" /> Back to Categories
-              </button>
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-100">
+              <div className="flex items-center gap-3">
+                <button onClick={() => setSelectedStatus(null)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors">
+                  <ArrowLeft className="w-3.5 h-3.5" /> Back to Categories
+                </button>
+                <p className="text-xs font-bold text-slate-600">
+                  {fmtNum(totalPatients)} patient folders · showing {fmtNum(filteredPatients.length)}
+                </p>
+              </div>
               <p className="text-xs font-bold text-slate-500">
                 {selectedDate} · {selectedFacility} · {selectedStatus === 'Suspected' ? '🔴 Suspected' : '🟢 Not Suspected'}
               </p>
@@ -535,7 +563,7 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
                       }}
                       className="px-5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-black transition-colors"
                     >
-                      Load More Patient Folders
+                      Load More Patient Folders ({fmtNum(totalPatients - patientList.length)} remaining)
                     </button>
                   </div>
                 )}
