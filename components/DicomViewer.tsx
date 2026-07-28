@@ -11,8 +11,7 @@ interface DicomViewerProps {
 // Build the proxied URL to bypass CORS on Azure blob
 function proxyUrl(raw: string) {
   if (!raw) return ''
-  // Use our Next.js server-side proxy route
-  return `/api/v1/files/proxy?url=${encodeURIComponent(raw)}`
+  return `/api/v1/proxy?url=${encodeURIComponent(raw)}`
 }
 
 export default function DicomViewer({ fileUrl, filename }: DicomViewerProps) {

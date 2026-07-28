@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@azure/storage-blob": "^12.32.0",
     "@cornerstonejs/core": "^5.0.10",
     "@cornerstonejs/dicom-image-loader": "^5.0.10",
     "@cornerstonejs/tools": "^5.0.10",

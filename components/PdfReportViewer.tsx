@@ -10,7 +10,7 @@ interface PdfReportViewerProps {
 
 function proxyUrl(raw: string) {
   if (!raw) return ''
-  return `/api/v1/files/proxy?url=${encodeURIComponent(raw)}`
+  return `/api/v1/proxy?url=${encodeURIComponent(raw)}`
 }
 
 export default function PdfReportViewer({ fileUrl, filename }: PdfReportViewerProps) {
