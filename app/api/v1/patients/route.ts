@@ -1,99 +1,99 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { REAL_PATIENT_DATA } from './patientsData'
-
-const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'
+import { HIERARCHY_DATA } from './patientsData'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl
-  const facility = searchParams.get('facility') || 'AKROSS'
-  const month    = searchParams.get('month') || '2026-01'
-  const page     = parseInt(searchParams.get('page') || '1')
-  const limit    = Math.min(parseInt(searchParams.get('limit') || '500'), 1000)
-  const offset   = (page - 1) * limit
+  const dateParam     = searchParams.get('date')
+  const facilityParam = searchParams.get('facility')
+  const statusParam   = searchParams.get('status')
+  const page          = parseInt(searchParams.get('page') || '1')
+  const limit         = Math.min(parseInt(searchParams.get('limit') || '60'), 200)
+  const offset        = (page - 1) * limit
 
   try {
-    // Attempt fast fetch from live backend service if reachable
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 2000)
+    const dates = Object.keys(HIERARCHY_DATA).sort().reverse()
 
-    const url = `${BACKEND_URL}/api/v1/files?facility=${encodeURIComponent(facility)}&month=${encodeURIComponent(month)}&limit=${limit * 2}&page=1`
-    const res = await fetch(url, {
-      signal: controller.signal,
-      next: { revalidate: 60 }
-    }).finally(() => clearTimeout(timeoutId))
-
-    if (res.ok) {
-      const data: { files: any[]; total: number } = await res.json()
-      const files: any[] = data.files || []
-
-      const patientMap = new Map<string, any>()
-      for (const f of files) {
-        const pid = (f.inmate_id && f.inmate_id !== 'None') ? f.inmate_id : null
-        if (!pid) continue
-
-        if (!patientMap.has(pid)) {
-          patientMap.set(pid, {
-            patient_id: pid,
-            dcm_count: 0,
-            pdf_count: 0,
-            total_size: 0,
-            dcm_url: null,
-            pdf_url: null,
-            dcm_name: null,
-            pdf_name: null,
-          })
-        }
-
-        const entry = patientMap.get(pid)!
-        entry.total_size += f.size_bytes || 0
-        const ft = (f.file_type || '').toLowerCase()
-        const targetUrl = f.target_file_id || f.azure_url || null
-
-        if (ft === 'dcm') {
-          entry.dcm_count++
-          if (!entry.dcm_url && targetUrl) {
-            entry.dcm_url = targetUrl
-            entry.dcm_name = f.filename
-          }
-        } else if (ft === 'pdf') {
-          entry.pdf_count++
-          if (!entry.pdf_url && targetUrl) {
-            entry.pdf_url = targetUrl
-            entry.pdf_name = f.filename
-          }
-        }
-      }
-
-      const patients = Array.from(patientMap.values())
-      patients.sort((a, b) => a.patient_id.localeCompare(b.patient_id))
-      const paginated = patients.slice(offset, offset + limit)
-
-      if (paginated.length > 0) {
-        return NextResponse.json({
-          total: patients.length,
-          page,
-          limit,
-          patients: paginated,
-          source: 'backend'
+    // 1. If no date requested, return list of available dates with metrics
+    if (!dateParam) {
+      const dateList = dates.map(d => {
+        const facs = HIERARCHY_DATA[d] || {}
+        let sCnt = 0
+        let nsCnt = 0
+        Object.values(facs).forEach(fObj => {
+          sCnt += (fObj['Suspected'] || []).length
+          nsCnt += (fObj['Not Suspected'] || []).length
         })
-      }
+        return {
+          date: d,
+          total_patients: sCnt + nsCnt,
+          suspected_count: sCnt,
+          not_suspected_count: nsCnt,
+          facility_count: Object.keys(facs).length
+        }
+      })
+
+      return NextResponse.json({
+        dates: dateList,
+        total_dates: dateList.length
+      })
     }
+
+    // 2. If date requested but no facility, return facilities for that date
+    const dateObj = HIERARCHY_DATA[dateParam] || {}
+    if (!facilityParam) {
+      const facilityList = Object.keys(dateObj).map(fName => {
+        const fObj = dateObj[fName] || {}
+        const sCnt = (fObj['Suspected'] || []).length
+        const nsCnt = (fObj['Not Suspected'] || []).length
+        return {
+          facility: fName,
+          total_patients: sCnt + nsCnt,
+          suspected_count: sCnt,
+          not_suspected_count: nsCnt
+        }
+      })
+
+      return NextResponse.json({
+        date: dateParam,
+        facilities: facilityList
+      })
+    }
+
+    // 3. If date and facility requested, return status counts or patient list
+    const facObj = dateObj[facilityParam] || { 'Suspected': [], 'Not Suspected': [] }
+
+    if (!statusParam) {
+      return NextResponse.json({
+        date: dateParam,
+        facility: facilityParam,
+        categories: [
+          { status: 'Suspected', label: '🔴 Suspected (TB / Lesion Detected)', count: (facObj['Suspected'] || []).length },
+          { status: 'Not Suspected', label: '🟢 Not Suspected (Normal Examination)', count: (facObj['Not Suspected'] || []).length }
+        ]
+      })
+    }
+
+    // 4. Return paginated patient folders under specific status
+    const categoryKey = statusParam === 'Suspected' ? 'Suspected' : 'Not Suspected'
+    const patientList: any[] = facObj[categoryKey] || []
+    const paginated = patientList.slice(offset, offset + limit)
+
+    return NextResponse.json({
+      date: dateParam,
+      facility: facilityParam,
+      status: categoryKey,
+      total: patientList.length,
+      page,
+      limit,
+      patients: paginated,
+      has_more: offset + limit < patientList.length
+    })
+
   } catch (err: any) {
-    console.warn('Backend fetch failed, falling back to embedded real patient dataset:', err.message)
+    console.error('Hierarchy API error:', err)
+    return NextResponse.json(
+      { error: err.message || 'Failed to fetch hierarchy data' },
+      { status: 500 }
+    )
   }
-
-  // 100% Guaranteed Fallback from REAL_PATIENT_DATA (Zero latency on Vercel)
-  const facKey = facility.toUpperCase()
-  const facData = REAL_PATIENT_DATA[facKey] || REAL_PATIENT_DATA['AKROSS']
-  const monthPatients = facData[month] || facData['2026-01'] || []
-
-  const paginated = monthPatients.slice(offset, offset + limit)
-
-  return NextResponse.json({
-    total: monthPatients.length,
-    page,
-    limit,
-    patients: paginated,
-    source: 'real_dataset_fallback'
-  })
 }
