@@ -230,12 +230,14 @@ export default function StorageHierarchyExplorer() {
             onChange={e => setSelectedMonth(e.target.value)}
             className="px-3.5 py-2 rounded-xl text-xs font-bold bg-white text-slate-700 border border-slate-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
           >
-            <option value="ALL">All Months</option>
+            <option value="ALL">All Months (Jan - Jul)</option>
             <option value="2026-01">January 2026</option>
             <option value="2026-02">February 2026</option>
             <option value="2026-03">March 2026</option>
             <option value="2026-04">April 2026</option>
             <option value="2026-05">May 2026</option>
+            <option value="2026-06">June 2026</option>
+            <option value="2026-07">July 2026</option>
           </select>
         </div>
 
