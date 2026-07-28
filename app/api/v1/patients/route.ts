@@ -3,28 +3,26 @@ import { HIERARCHY_DATA } from './patientsData'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl
-  const monthParam    = searchParams.get('month')
-  const dateParam     = searchParams.get('date')
-  const facilityParam = searchParams.get('facility')
-  const statusParam   = searchParams.get('status')
-  const page          = parseInt(searchParams.get('page') || '1')
-  const limit         = Math.min(parseInt(searchParams.get('limit') || '60'), 200)
-  const offset        = (page - 1) * limit
+  const facilityParam  = (searchParams.get('facility') || 'AKROSS').toUpperCase()
+  const monthParam     = searchParams.get('month')
+  const dateParam      = searchParams.get('date')
+  const subFacParam    = searchParams.get('subfacility')
+  const statusParam    = searchParams.get('status')
+  const page           = parseInt(searchParams.get('page') || '1')
+  const limit          = Math.min(parseInt(searchParams.get('limit') || '60'), 200)
+  const offset         = (page - 1) * limit
 
   try {
-    const allDates = Object.keys(HIERARCHY_DATA).sort().reverse()
+    const parentObj = HIERARCHY_DATA[facilityParam] || HIERARCHY_DATA['AKROSS'] || {}
 
-    // 1. If month requested (e.g. '2026-01'), return dates belonging to that month (DD-MM-YY format)
+    // 1. If month requested (e.g. '2026-01'), return dates belonging to that month under THIS facility!
     if (monthParam && !dateParam) {
-      const parts = monthParam.split('-')
-      const mNum = parts[1] || '01'
-      const mYear = parts[0] ? parts[0].slice(-2) : '26'
-      const monthDates = allDates.filter(d => d.includes(`-${mNum}-${mYear}`) || d.includes(`-${mNum}-`) || d.startsWith(monthParam))
-      const dateList = monthDates.map(d => {
-        const facs = HIERARCHY_DATA[d] || {}
+      const monthObj = parentObj[monthParam] || {}
+      const dateList = Object.keys(monthObj).sort().reverse().map(d => {
+        const subFacs = monthObj[d] || {}
         let sCnt = 0
         let nsCnt = 0
-        Object.values(facs).forEach(fObj => {
+        Object.values(subFacs).forEach(fObj => {
           sCnt += (fObj['Suspected'] || []).length
           nsCnt += (fObj['Not Suspected'] || []).length
         })
@@ -33,20 +31,22 @@ export async function GET(request: NextRequest) {
           total_patients: sCnt + nsCnt,
           suspected_count: sCnt,
           not_suspected_count: nsCnt,
-          facility_count: Object.keys(facs).length
+          facility_count: Object.keys(subFacs).length
         }
       })
 
       return NextResponse.json({
+        facility: facilityParam,
         month: monthParam,
         dates: dateList,
         total_dates: dateList.length
       })
     }
 
-    // 2. If date requested but no facility, return facilities for that date
-    if (dateParam && !facilityParam) {
-      const dateObj = HIERARCHY_DATA[dateParam] || {}
+    // 2. If date requested but no subfacility, return facilities for that date UNDER THIS FACILITY!
+    if (monthParam && dateParam && !subFacParam) {
+      const monthObj = parentObj[monthParam] || {}
+      const dateObj = monthObj[dateParam] || {}
       const facilityList = Object.keys(dateObj).map(fName => {
         const fObj = dateObj[fName] || {}
         const sCnt = (fObj['Suspected'] || []).length
@@ -60,36 +60,44 @@ export async function GET(request: NextRequest) {
       })
 
       return NextResponse.json({
+        facility: facilityParam,
+        month: monthParam,
         date: dateParam,
         facilities: facilityList
       })
     }
 
-    // 3. If date & facility requested, return status categories
-    if (dateParam && facilityParam && !statusParam) {
-      const dateObj = HIERARCHY_DATA[dateParam] || {}
-      const facObj = dateObj[facilityParam] || { 'Suspected': [], 'Not Suspected': [] }
+    // 3. If date & subfacility requested, return status categories
+    if (monthParam && dateParam && subFacParam && !statusParam) {
+      const monthObj = parentObj[monthParam] || {}
+      const dateObj = monthObj[dateParam] || {}
+      const fObj = dateObj[subFacParam] || { 'Suspected': [], 'Not Suspected': [] }
       return NextResponse.json({
-        date: dateParam,
         facility: facilityParam,
+        month: monthParam,
+        date: dateParam,
+        subfacility: subFacParam,
         categories: [
-          { status: 'Suspected', label: '🔴 Suspected (TB / Lesion Detected)', count: (facObj['Suspected'] || []).length },
-          { status: 'Not Suspected', label: '🟢 Not Suspected (Normal Examination)', count: (facObj['Not Suspected'] || []).length }
+          { status: 'Suspected', label: '🔴 Suspected (TB / Lesion Detected)', count: (fObj['Suspected'] || []).length },
+          { status: 'Not Suspected', label: '🟢 Not Suspected (Normal Examination)', count: (fObj['Not Suspected'] || []).length }
         ]
       })
     }
 
     // 4. Return paginated patient study folders for specific status
-    if (dateParam && facilityParam && statusParam) {
-      const dateObj = HIERARCHY_DATA[dateParam] || {}
-      const facObj = dateObj[facilityParam] || { 'Suspected': [], 'Not Suspected': [] }
+    if (monthParam && dateParam && subFacParam && statusParam) {
+      const monthObj = parentObj[monthParam] || {}
+      const dateObj = monthObj[dateParam] || {}
+      const fObj = dateObj[subFacParam] || { 'Suspected': [], 'Not Suspected': [] }
       const categoryKey = statusParam === 'Suspected' ? 'Suspected' : 'Not Suspected'
-      const patientList: any[] = facObj[categoryKey] || []
+      const patientList: any[] = fObj[categoryKey] || []
       const paginated = patientList.slice(offset, offset + limit)
 
       return NextResponse.json({
-        date: dateParam,
         facility: facilityParam,
+        month: monthParam,
+        date: dateParam,
+        subfacility: subFacParam,
         status: categoryKey,
         total: patientList.length,
         page,
@@ -99,10 +107,10 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Default fallback: return month summary
+    // Default fallback: return months summary for requested facility
     return NextResponse.json({
-      dates: allDates.slice(0, 30),
-      total_dates: allDates.length
+      facility: facilityParam,
+      months: Object.keys(parentObj)
     })
 
   } catch (err: any) {

@@ -116,6 +116,15 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
 
   const months = FACILITY_MONTHS[facility] || FACILITY_MONTHS.AKROSS
 
+  // Reset navigation when switching main facility tabs (AKROSS vs DAVO)
+  useEffect(() => {
+    setSelectedMonth(initialMonth || null)
+    setSelectedDate(null)
+    setSelectedFacility(null)
+    setSelectedStatus(null)
+    setSelectedPatient(null)
+  }, [facility, initialMonth])
+
   // Fire burn animation on month click
   const handleMonthClick = (monthKey: string) => {
     setIsBurning(true)
@@ -130,11 +139,11 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
     }, 1800)
   }
 
-  // 1. Fetch dates for selected month (Level 2)
+  // 1. Fetch dates for selected month under THIS parent facility (Level 2)
   useEffect(() => {
     if (!selectedMonth) return
     setLoading(true)
-    fetch(`/api/v1/patients?month=${encodeURIComponent(selectedMonth)}`)
+    fetch(`/api/v1/patients?facility=${encodeURIComponent(facility)}&month=${encodeURIComponent(selectedMonth)}`)
       .then(res => res.json())
       .then(data => {
         setDateList(data.dates || [])
@@ -144,16 +153,16 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
         console.error('Failed to load dates:', err)
         setLoading(false)
       })
-  }, [selectedMonth])
+  }, [facility, selectedMonth])
 
-  // 2. Fetch facilities when date selected (Level 3)
+  // 2. Fetch facilities when date selected under THIS parent facility (Level 3)
   useEffect(() => {
-    if (!selectedDate) {
+    if (!selectedDate || !selectedMonth) {
       setFacilityList([])
       return
     }
     setLoading(true)
-    fetch(`/api/v1/patients?date=${encodeURIComponent(selectedDate)}`)
+    fetch(`/api/v1/patients?facility=${encodeURIComponent(facility)}&month=${encodeURIComponent(selectedMonth)}&date=${encodeURIComponent(selectedDate)}`)
       .then(res => res.json())
       .then(data => {
         setFacilityList(data.facilities || [])
@@ -163,13 +172,14 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
         console.error('Failed to load facilities:', err)
         setLoading(false)
       })
-  }, [selectedDate])
+  }, [facility, selectedMonth, selectedDate])
 
-  // 3. Fetch patients when status category selected (Level 5)
+  // 3. Fetch patients when status category selected under THIS parent facility (Level 5)
   const fetchPatients = useCallback((dateStr: string, facStr: string, statusStr: string, pg: number) => {
+    if (!selectedMonth) return
     setLoading(true)
     fetch(
-      `/api/v1/patients?date=${encodeURIComponent(dateStr)}&facility=${encodeURIComponent(facStr)}&status=${encodeURIComponent(statusStr)}&page=${pg}&limit=60`
+      `/api/v1/patients?facility=${encodeURIComponent(facility)}&month=${encodeURIComponent(selectedMonth)}&date=${encodeURIComponent(dateStr)}&subfacility=${encodeURIComponent(facStr)}&status=${encodeURIComponent(statusStr)}&page=${pg}&limit=60`
     )
       .then(res => res.json())
       .then(data => {
@@ -187,16 +197,16 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
         console.error('Failed to load patient list:', err)
         setLoading(false)
       })
-  }, [])
+  }, [facility, selectedMonth])
 
   useEffect(() => {
-    if (!selectedDate || !selectedFacility || !selectedStatus) {
+    if (!selectedMonth || !selectedDate || !selectedFacility || !selectedStatus) {
       setPatientList([])
       return
     }
     setPage(1)
     fetchPatients(selectedDate, selectedFacility, selectedStatus, 1)
-  }, [selectedDate, selectedFacility, selectedStatus, fetchPatients])
+  }, [selectedMonth, selectedDate, selectedFacility, selectedStatus, fetchPatients])
 
   const filteredPatients = patientList.filter(p =>
     p.patient_id.toLowerCase().includes(searchQuery.toLowerCase())
