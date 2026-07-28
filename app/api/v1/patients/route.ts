@@ -22,13 +22,23 @@ export async function GET(request: NextRequest) {
         const subFacs = monthObj[d] || {}
         let sCnt = 0
         let nsCnt = 0
-        Object.values(subFacs).forEach(fObj => {
-          sCnt += (fObj['Suspected'] || []).length
-          nsCnt += (fObj['Not Suspected'] || []).length
+        let totCnt = 0
+
+        Object.values(subFacs).forEach((fObj: any) => {
+          const sArr = fObj['Suspected'] || []
+          const nsArr = fObj['Not Suspected'] || []
+          const sVal = fObj?.['suspected_count'] ?? sArr.length
+          const totVal = fObj?.['total_count'] ?? (sArr.length + nsArr.length)
+          const nsVal = totVal - sVal
+
+          sCnt += sVal
+          nsCnt += nsVal
+          totCnt += totVal
         })
+
         return {
           date: d,
-          total_patients: sCnt + nsCnt,
+          total_patients: totCnt,
           suspected_count: sCnt,
           not_suspected_count: nsCnt,
           facility_count: Object.keys(subFacs).length
@@ -48,14 +58,18 @@ export async function GET(request: NextRequest) {
       const monthObj = parentObj[monthParam] || {}
       const dateObj = monthObj[dateParam] || {}
       const facilityList = Object.keys(dateObj).map(fName => {
-        const fObj = dateObj[fName] || {}
-        const sCnt = (fObj['Suspected'] || []).length
-        const nsCnt = (fObj['Not Suspected'] || []).length
+        const fObj: any = dateObj[fName] || {}
+        const sArr = fObj['Suspected'] || []
+        const nsArr = fObj['Not Suspected'] || []
+        const sVal = fObj?.['suspected_count'] ?? sArr.length
+        const totVal = fObj?.['total_count'] ?? (sArr.length + nsArr.length)
+        const nsVal = totVal - sVal
+
         return {
           facility: fName,
-          total_patients: sCnt + nsCnt,
-          suspected_count: sCnt,
-          not_suspected_count: nsCnt
+          total_patients: totVal,
+          suspected_count: sVal,
+          not_suspected_count: nsVal
         }
       })
 
@@ -71,7 +85,7 @@ export async function GET(request: NextRequest) {
     if (monthParam && dateParam && subFacParam) {
       const monthObj = parentObj[monthParam] || {}
       const dateObj = monthObj[dateParam] || {}
-      const fObj = dateObj[subFacParam] || { 'Suspected': [], 'Not Suspected': [] }
+      const fObj: any = dateObj[subFacParam] || { 'Suspected': [], 'Not Suspected': [] }
 
       const suspectedList: any[] = fObj['Suspected'] || []
       const notSuspectedList: any[] = fObj['Not Suspected'] || []
@@ -85,6 +99,7 @@ export async function GET(request: NextRequest) {
         combined = notSuspectedList
       }
 
+      const totalItems = fObj?.['total_count'] ?? (suspectedList.length + notSuspectedList.length)
       const paginated = combined.slice(offset, offset + limit)
 
       return NextResponse.json({
@@ -92,28 +107,19 @@ export async function GET(request: NextRequest) {
         month: monthParam,
         date: dateParam,
         subfacility: subFacParam,
-        status: statusParam || 'all',
-        total: combined.length,
-        suspected_count: suspectedList.length,
-        not_suspected_count: notSuspectedList.length,
+        patients: paginated,
+        total: totalItems,
+        suspected_count: fObj?.['suspected_count'] ?? suspectedList.length,
+        not_suspected_count: totalItems - (fObj?.['suspected_count'] ?? suspectedList.length),
         page,
         limit,
-        patients: paginated,
         has_more: offset + limit < combined.length
       })
     }
 
-    // Default fallback
-    return NextResponse.json({
-      facility: facilityParam,
-      months: Object.keys(parentObj)
-    })
-
+    return NextResponse.json({ error: 'Invalid parameters' }, { status: 400 })
   } catch (err: any) {
-    console.error('Hierarchy API error:', err)
-    return NextResponse.json(
-      { facility: facilityParam, dates: [], patients: [], total: 0, warning: err.message },
-      { status: 200 }
-    )
+    console.error('Patients API error:', err)
+    return NextResponse.json({ error: err.message || 'Failed to fetch patient data' }, { status: 500 })
   }
 }

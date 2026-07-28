@@ -86,33 +86,47 @@ export default function StorageHierarchyExplorer() {
             const statusObj = subfacs[sf] || {}
             const suspected = statusObj['Suspected'] || []
             const notSuspected = statusObj['Not Suspected'] || []
-
             const allPats = [...suspected, ...notSuspected]
 
-            allPats.forEach(p => {
-              if (searchQuery.trim()) {
+            const subfacTotal = statusObj['total_count'] ?? allPats.length
+            const subfacDcm = statusObj['dcm_total'] ?? subfacTotal
+            const subfacPdf = statusObj['pdf_total'] ?? subfacTotal
+            const subfacSuspected = statusObj['suspected_count'] ?? suspected.length
+
+            if (!searchQuery.trim()) {
+              totalPatients += subfacTotal
+              totalDcms += subfacDcm
+              totalPdfs += subfacPdf
+              totalSuspected += subfacSuspected
+              totalNotSuspected += (subfacTotal - subfacSuspected)
+
+              monthDataMap[mKey].dates[dKey].dcmTotal += subfacDcm
+              monthDataMap[mKey].dates[dKey].pdfTotal += subfacPdf
+              monthDataMap[mKey].dates[dKey].patients.push(...allPats)
+            } else {
+              allPats.forEach(p => {
                 const q = searchQuery.toLowerCase()
                 const matchId = p.patient_id?.toLowerCase().includes(q)
                 const matchDcm = p.dcm_name?.toLowerCase().includes(q)
                 const matchPdf = p.pdf_name?.toLowerCase().includes(q)
                 if (!matchId && !matchDcm && !matchPdf) return
-              }
 
-              totalPatients++
-              const dCount = p.dcm_count ?? 1
-              const pCount = p.pdf_count ?? 1
-              
-              totalDcms += dCount
-              totalPdfs += pCount
+                totalPatients++
+                const dCount = p.dcm_count ?? 1
+                const pCount = p.pdf_count ?? 1
+                
+                totalDcms += dCount
+                totalPdfs += pCount
 
-              monthDataMap[mKey].dates[dKey].dcmTotal += dCount
-              monthDataMap[mKey].dates[dKey].pdfTotal += pCount
+                monthDataMap[mKey].dates[dKey].dcmTotal += dCount
+                monthDataMap[mKey].dates[dKey].pdfTotal += pCount
 
-              if (p.status === 'Suspected') totalSuspected++
-              else totalNotSuspected++
+                if (p.status === 'Suspected') totalSuspected++
+                else totalNotSuspected++
 
-              monthDataMap[mKey].dates[dKey].patients.push(p)
-            })
+                monthDataMap[mKey].dates[dKey].patients.push(p)
+              })
+            }
           })
         })
       })

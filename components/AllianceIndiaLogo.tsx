@@ -1,6 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import { ChevronRight } from 'lucide-react'
 
 interface AllianceIndiaLogoProps {
   collapsed?: boolean
@@ -9,15 +10,14 @@ interface AllianceIndiaLogoProps {
 
 export default function AllianceIndiaLogo({ collapsed = false, className = '' }: AllianceIndiaLogoProps) {
   if (collapsed) {
-    // Sleek Brand Emblem when Sidebar is Collapsed (No duplicate chevron)
+    // Chevron > button when Sidebar is Collapsed (Replaces AI badge)
     return (
       <motion.div 
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.95 }}
-        className={`relative w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-600 flex items-center justify-center shadow-lg shadow-indigo-500/25 cursor-pointer overflow-hidden group ${className}`}
+        className={`w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-600 flex items-center justify-center shadow-lg shadow-indigo-500/25 cursor-pointer text-white transition-all ${className}`}
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-white/20 via-transparent to-white/30 pointer-events-none" />
-        <span className="font-black text-lg text-white tracking-tighter drop-shadow-md">AI</span>
+        <ChevronRight className="w-6 h-6 stroke-[3]" />
       </motion.div>
     )
   }
@@ -60,9 +60,14 @@ export default function AllianceIndiaLogo({ collapsed = false, className = '' }:
           {/* Dots on 'i' */}
           <circle cx="148" cy="35" r="10" fill="#eab308" />
 
-          {/* India Text in Black */}
-          <text x="25" y="190" fontFamily="sans-serif" fontWeight="900" fontSize="72" fill="#000000">
-            India
+          {/* INDIA Text below */}
+          <text x="35" y="165" fill="#f97316" fontSize="52" fontWeight="900" fontFamily="sans-serif" letterSpacing="18">
+            INDIA
+          </text>
+
+          {/* Subtitle */}
+          <text x="35" y="210" fill="#06b6d4" fontSize="24" fontWeight="800" fontFamily="sans-serif" letterSpacing="4">
+            NATIONAL ALLIANCE
           </text>
         </svg>
       </div>

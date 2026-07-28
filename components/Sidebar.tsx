@@ -3,19 +3,35 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Database, FileText, FolderTree, Menu, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { FolderTree, Menu, X, ChevronLeft } from 'lucide-react'
 import AllianceIndiaLogo from './AllianceIndiaLogo'
 
+// Icon components for 'A' (Akross) and 'D' (Davo)
+function AkrossIcon({ className = '' }: { className?: string }) {
+  return (
+    <div className={`w-6 h-6 rounded-lg bg-indigo-100 text-indigo-700 font-black text-xs flex items-center justify-center border border-indigo-200 shadow-sm ${className}`}>
+      A
+    </div>
+  )
+}
+
+function DavoIcon({ className = '' }: { className?: string }) {
+  return (
+    <div className={`w-6 h-6 rounded-lg bg-purple-100 text-purple-700 font-black text-xs flex items-center justify-center border border-purple-200 shadow-sm ${className}`}>
+      D
+    </div>
+  )
+}
+
 const navigation = [
-  { name: 'Dashboard', href: '/', icon: Home, badge: 'Overview' },
-  { name: 'Akross', href: '/akross', icon: Database, badge: 'Facility' },
-  { name: 'Davo', href: '/davo', icon: FileText, badge: 'Facility' },
+  { name: 'Akross', href: '/akross', customIcon: AkrossIcon, badge: 'Facility' },
+  { name: 'Davo', href: '/davo', customIcon: DavoIcon, badge: 'Facility' },
   { name: 'Storage Hierarchy', href: '/storage-hierarchy', icon: FolderTree, badge: 'Azure View' },
 ]
 
 export default function Sidebar() {
   const [isMobileOpen, setIsMobileOpen] = useState(false)
-  const [isCollapsed, setIsCollapsed] = useState(true) // Closed manually by default for maximum canvas width
+  const [isCollapsed, setIsCollapsed] = useState(true) // Closed manually by default
   const pathname = usePathname()
 
   return (
@@ -39,7 +55,7 @@ export default function Sidebar() {
         `}
       >
         <div>
-          {/* Logo & Single Toggle Header */}
+          {/* Logo & Toggle Header */}
           <div className="px-3 py-5 border-b border-slate-100 flex items-center justify-between">
             <button 
               onClick={() => setIsCollapsed(!isCollapsed)}
@@ -61,17 +77,18 @@ export default function Sidebar() {
             )}
           </div>
 
-          {/* Navigation Items (Dashboard, Akross, Davo, Storage Hierarchy) */}
+          {/* Navigation Items (Akross [A], Davo [D], Storage Hierarchy) */}
           <div className="px-3 py-6">
             {!isCollapsed && (
               <p className="px-3 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-3">
-                Core Applications
+                Facilities & Storage
               </p>
             )}
             <nav className="space-y-2">
               {navigation.map((item) => {
                 const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
-                const Icon = item.icon
+                const CustomIcon = item.customIcon
+                const StandardIcon = item.icon
 
                 return (
                   <Link
@@ -89,7 +106,11 @@ export default function Sidebar() {
                     title={isCollapsed ? item.name : undefined}
                   >
                     <div className="flex items-center gap-3">
-                      <Icon className={`w-5 h-5 transition-transform group-hover:scale-110 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-indigo-600'}`} />
+                      {CustomIcon ? (
+                        <CustomIcon className={isActive ? 'bg-white/20 text-white border-white/30' : ''} />
+                      ) : StandardIcon ? (
+                        <StandardIcon className={`w-5 h-5 transition-transform group-hover:scale-110 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-indigo-600'}`} />
+                      ) : null}
                       {!isCollapsed && <span>{item.name}</span>}
                     </div>
                     {!isCollapsed && isActive && (
