@@ -192,7 +192,7 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
     if (!selectedMonth) return
     setLoading(true)
     fetch(
-      `/api/v1/patients?facility=${encodeURIComponent(facility)}&month=${encodeURIComponent(selectedMonth)}&date=${encodeURIComponent(dateStr)}&subfacility=${encodeURIComponent(facStr)}&status=${encodeURIComponent(filterStr)}&page=${pg}&limit=60`
+      `/api/v1/patients?facility=${encodeURIComponent(facility)}&month=${encodeURIComponent(selectedMonth)}&date=${encodeURIComponent(dateStr)}&subfacility=${encodeURIComponent(facStr)}&status=${encodeURIComponent(filterStr)}&page=${pg}&limit=300`
     )
       .then(res => res.json())
       .then(data => {
@@ -483,7 +483,7 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
                   <ArrowLeft className="w-3.5 h-3.5" /> Back to Facilities
                 </button>
                 <p className="text-xs font-bold text-slate-600">
-                  {fmtNum(totalPatients)} patient folders · showing {fmtNum(filteredPatients.length)}
+                  {fmtNum(totalPatients)} patient folders · showing {fmtNum(searchQuery.trim() ? filteredPatients.length : totalPatients)}
                 </p>
               </div>
               <span className="text-xs font-black text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1 rounded-xl self-start sm:self-auto">
@@ -587,6 +587,30 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
                       className="px-5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-black transition-colors"
                     >
                       Load More Patient Folders ({fmtNum(totalPatients - patientList.length)} remaining)
+                    </button>
+                  </div>
+                )}
+
+                {hasMore && (
+                  <div className="pt-6 text-center">
+                    <button
+                      onClick={() => {
+                        const nextPage = page + 1
+                        setPage(nextPage)
+                        fetchPatients(selectedDate!, selectedFacility!, statusFilter, nextPage)
+                      }}
+                      disabled={loading}
+                      className="px-6 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-black text-xs shadow-lg shadow-indigo-500/20 transition-all flex items-center gap-2 mx-auto disabled:opacity-50"
+                    >
+                      {loading ? (
+                        <>
+                          <RefreshCw className="w-4 h-4 animate-spin" /> Loading next batch…
+                        </>
+                      ) : (
+                        <>
+                          Load More Patient Folders (showing {filteredPatients.length} of {totalPatients})
+                        </>
+                      )}
                     </button>
                   </div>
                 )}

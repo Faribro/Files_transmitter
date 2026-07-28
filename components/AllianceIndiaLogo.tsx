@@ -64,11 +64,6 @@ export default function AllianceIndiaLogo({ collapsed = false, className = '' }:
           <text x="35" y="165" fill="#f97316" fontSize="52" fontWeight="900" fontFamily="sans-serif" letterSpacing="18">
             INDIA
           </text>
-
-          {/* Subtitle */}
-          <text x="35" y="210" fill="#06b6d4" fontSize="24" fontWeight="800" fontFamily="sans-serif" letterSpacing="4">
-            NATIONAL ALLIANCE
-          </text>
         </svg>
       </div>
     </div>
