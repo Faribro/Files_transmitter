@@ -55,22 +55,30 @@ interface DriveExplorerProps {
   onMonthSelect?:  (month: string) => void
 }
 
+const generateAllMonths = (): MonthConfig[] => {
+  const months: MonthConfig[] = []
+  const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+  const monthFullNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+  
+  ;[2026, 2027].forEach(year => {
+    monthNames.forEach((m, idx) => {
+      const mm = String(idx + 1).padStart(2, '0')
+      months.push({
+        key: `${year}-${mm}`,
+        label: `${m} ${year}`,
+        desc: `${monthFullNames[idx]} ${year}`
+      })
+    })
+  })
+
+  return months
+}
+
+const ALL_24_MONTHS = generateAllMonths()
+
 const FACILITY_MONTHS: Record<string, MonthConfig[]> = {
-  AKROSS: [
-    { key: '2026-01', label: 'Jan 2026', desc: 'January 2026' },
-    { key: '2026-02', label: 'Feb 2026', desc: 'February 2026' },
-    { key: '2026-03', label: 'Mar 2026', desc: 'March 2026' },
-    { key: '2026-04', label: 'Apr 2026', desc: 'April 2026' },
-  ],
-  DAVO: [
-    { key: '2026-01', label: 'Jan 2026', desc: 'January 2026' },
-    { key: '2026-02', label: 'Feb 2026', desc: 'February 2026' },
-    { key: '2026-03', label: 'Mar 2026', desc: 'March 2026' },
-    { key: '2026-04', label: 'Apr 2026', desc: 'April 2026' },
-    { key: '2026-05', label: 'May 2026', desc: 'May 2026' },
-    { key: '2026-06', label: 'Jun 2026', desc: 'June 2026' },
-    { key: '2026-07', label: 'Jul 2026', desc: 'July 2026' },
-  ],
+  AKROSS: ALL_24_MONTHS,
+  DAVO: ALL_24_MONTHS,
 }
 
 import { HIERARCHY_DATA } from '@/app/api/v1/patients/patientsData'
@@ -357,10 +365,10 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
                     onClick={() => handleMonthClick(mf.key)}
                     className="group flex flex-col items-start p-5 rounded-2xl bg-white hover:bg-gradient-to-br hover:from-indigo-50 hover:to-purple-50 border border-slate-200/80 hover:border-indigo-300 shadow-sm hover:shadow-lg hover:shadow-indigo-500/10 transition-all text-left"
                   >
-                    <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center mb-3 group-hover:bg-indigo-600 transition-colors">
-                      <Folder className="w-5 h-5 text-indigo-600 group-hover:text-white transition-colors" />
+                    <div className="w-11 h-11 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center mb-3 group-hover:bg-indigo-600 transition-colors shadow-sm">
+                      <Folder className="w-6 h-6 text-indigo-600 group-hover:text-white transition-colors" />
                     </div>
-                    <h3 className="text-sm font-black text-slate-900 group-hover:text-indigo-700">{mf.label}</h3>
+                    <h3 className="text-xl font-black tracking-tight text-slate-900 group-hover:text-indigo-700">{mf.label}</h3>
                     {stats && (
                       <div className="mt-2 space-y-0.5">
                         <p className="text-[10px] font-bold text-slate-400">{fmtNum(stats.patients)} patients</p>
@@ -543,7 +551,7 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
               </div>
             ) : (
               <>
-                <div className={viewMode === 'grid' ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3' : 'space-y-1.5'}>
+                <div className={viewMode === 'grid' ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3' : 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3'}>
                   {filteredPatients.map((p) => {
                     const isSuspect = p.status === 'Suspected'
                     return (
