@@ -6,6 +6,7 @@ import { ZoomIn, ZoomOut, RotateCw, Sun, RefreshCw, Download, AlertTriangle, Ext
 interface DicomViewerProps {
   fileUrl: string
   filename: string
+  onClose?: () => void
 }
 
 // Build the proxied URL to bypass CORS on Azure blob
@@ -14,7 +15,7 @@ function proxyUrl(raw: string) {
   return `/api/v1/proxy?url=${encodeURIComponent(raw)}`
 }
 
-export default function DicomViewer({ fileUrl, filename }: DicomViewerProps) {
+export default function DicomViewer({ fileUrl, filename, onClose }: DicomViewerProps) {
   const elemRef    = useRef<HTMLDivElement>(null)
   const [status, setStatus]   = useState<'loading' | 'ready' | 'error'>('loading')
   const [error, setError]     = useState('')

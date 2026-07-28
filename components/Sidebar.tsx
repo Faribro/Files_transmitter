@@ -3,13 +3,14 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Database, FileText, Menu, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Home, Database, FileText, FolderTree, Menu, X, ChevronLeft, ChevronRight } from 'lucide-react'
 import AllianceIndiaLogo from './AllianceIndiaLogo'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home, badge: 'Overview' },
   { name: 'Akross', href: '/akross', icon: Database, badge: 'Facility' },
   { name: 'Davo', href: '/davo', icon: FileText, badge: 'Facility' },
+  { name: 'Storage Hierarchy', href: '/storage-hierarchy', icon: FolderTree, badge: 'Azure View' },
 ]
 
 export default function Sidebar() {
@@ -38,27 +39,29 @@ export default function Sidebar() {
         `}
       >
         <div>
-          {/* Logo & Toggle Header */}
+          {/* Logo & Single Toggle Header */}
           <div className="px-3 py-5 border-b border-slate-100 flex items-center justify-between">
             <button 
               onClick={() => setIsCollapsed(!isCollapsed)}
-              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+              className="flex items-center gap-2 hover:opacity-80 transition-opacity focus:outline-none"
               title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
             >
               <AllianceIndiaLogo collapsed={isCollapsed} />
             </button>
 
-            {/* Collapse Toggle Button (Desktop Chevron) */}
-            <button
-              onClick={() => setIsCollapsed(!isCollapsed)}
-              className="hidden lg:flex items-center justify-center w-7 h-7 rounded-xl bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 border border-slate-200/80 transition-colors flex-shrink-0"
-              title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-            >
-              {isCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-            </button>
+            {/* Single Collapse Button (Only shown when sidebar is expanded) */}
+            {!isCollapsed && (
+              <button
+                onClick={() => setIsCollapsed(!isCollapsed)}
+                className="hidden lg:flex items-center justify-center w-7 h-7 rounded-xl bg-slate-100 hover:bg-indigo-50 text-slate-600 hover:text-indigo-600 border border-slate-200/80 transition-colors flex-shrink-0"
+                title="Collapse Sidebar"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+            )}
           </div>
 
-          {/* Navigation Items (Dashboard, Akross, Davo) */}
+          {/* Navigation Items (Dashboard, Akross, Davo, Storage Hierarchy) */}
           <div className="px-3 py-6">
             {!isCollapsed && (
               <p className="px-3 text-[10px] font-extrabold text-slate-400 uppercase tracking-widest mb-3">

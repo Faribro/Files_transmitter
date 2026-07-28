@@ -9,42 +9,24 @@ interface AllianceIndiaLogoProps {
 
 export default function AllianceIndiaLogo({ collapsed = false, className = '' }: AllianceIndiaLogoProps) {
   if (collapsed) {
-    // Shiny Animated Liquid Droplet Badge when Sidebar is Collapsed
+    // Sleek Brand Emblem when Sidebar is Collapsed (No duplicate chevron)
     return (
       <motion.div 
-        whileHover={{ scale: 1.1, rotate: 5 }}
+        whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.95 }}
-        className={`relative w-12 h-12 rounded-2xl bg-gradient-to-tr from-pink-500 via-purple-600 to-indigo-600 flex items-center justify-center p-2 shadow-xl shadow-purple-500/30 cursor-pointer overflow-hidden group ${className}`}
+        className={`relative w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-600 flex items-center justify-center shadow-lg shadow-indigo-500/25 cursor-pointer overflow-hidden group ${className}`}
       >
-        {/* Shimmering Animated Liquid Droplet Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-t from-white/30 via-transparent to-white/40 animate-pulse pointer-events-none" />
-
-        {/* Alliance Teardrop Badge with Chevron */}
-        <svg viewBox="0 0 100 100" className="w-8 h-8 text-white filter drop-shadow-md transition-transform group-hover:scale-110">
-          {/* Teardrop Shield */}
-          <path
-            d="M 50 15 C 70 15 85 30 85 50 C 85 70 70 85 50 85 C 30 85 15 70 15 50 C 15 30 30 15 50 15 Z"
-            fill="#000000"
-          />
-          {/* Chevron inside badge */}
-          <path
-            d="M 38 35 L 62 50 L 38 65"
-            fill="none"
-            stroke="#ffffff"
-            strokeWidth="10"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
+        <div className="absolute inset-0 bg-gradient-to-t from-white/20 via-transparent to-white/30 pointer-events-none" />
+        <span className="font-black text-lg text-white tracking-tighter drop-shadow-md">AI</span>
       </motion.div>
     )
   }
 
-  // Full Alliance India Brand Logo (Matching Attached Image)
+  // Full Alliance India Brand Logo
   return (
     <div className={`flex items-center gap-3 ${className}`}>
       <div className="relative">
-        <svg viewBox="0 0 400 240" className="h-12 w-auto">
+        <svg viewBox="0 0 400 240" className="h-10 w-auto">
           {/* Multi-color Overlapping Alliance Text Lines */}
           <g fill="none" strokeWidth="22" strokeLinecap="round" strokeLinejoin="round">
             {/* A - Green & Cyan */}
@@ -82,22 +64,6 @@ export default function AllianceIndiaLogo({ collapsed = false, className = '' }:
           <text x="25" y="190" fontFamily="sans-serif" fontWeight="900" fontSize="72" fill="#000000">
             India
           </text>
-
-          {/* Black Teardrop Badge with Chevron at Top Right */}
-          <g transform="translate(325, 20) scale(0.65)">
-            <path
-              d="M 50 10 C 75 10 90 28 90 50 C 90 72 72 90 50 90 C 28 90 10 72 10 50 C 10 28 28 10 50 10 Z"
-              fill="#000000"
-            />
-            <path
-              d="M 38 35 L 62 50 L 38 65"
-              fill="none"
-              stroke="#ffffff"
-              strokeWidth="10"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </g>
         </svg>
       </div>
     </div>

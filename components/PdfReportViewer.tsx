@@ -6,6 +6,7 @@ import { ZoomIn, ZoomOut, RotateCw, RefreshCw, ExternalLink, Download, AlertTria
 interface PdfReportViewerProps {
   fileUrl: string
   filename: string
+  onClose?: () => void
 }
 
 function proxyUrl(raw: string) {
@@ -13,7 +14,7 @@ function proxyUrl(raw: string) {
   return `/api/v1/proxy?url=${encodeURIComponent(raw)}`
 }
 
-export default function PdfReportViewer({ fileUrl, filename }: PdfReportViewerProps) {
+export default function PdfReportViewer({ fileUrl, filename, onClose }: PdfReportViewerProps) {
   const [zoom, setZoom]         = useState(100)
   const [rotation, setRotation] = useState(0)
   const [loaded, setLoaded]     = useState(false)
