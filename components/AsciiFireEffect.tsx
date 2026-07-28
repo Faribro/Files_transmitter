@@ -11,17 +11,17 @@ export default function AsciiFireEffect({ onComplete, durationMs = 1800 }: Ascii
   const canvasRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const width = 80
-    const height = 16
+    const width = 90
+    const height = 24 // Increased flame height to reach high up cards
     const firePixels = new Array(width * height).fill(0)
     const ramp = [" ", ".", ":", "░", "▒", "▓", "█"]
 
     let intervalId: NodeJS.Timeout
 
     function updateFire() {
-      // 1. Generate heat at bottom row
+      // 1. Generate heat at bottom row (Paper burning from bottom upwards)
       for (let x = 0; x < width; x++) {
-        firePixels[(height - 1) * width + x] = Math.random() > 0.3 ? 6 : 1
+        firePixels[(height - 1) * width + x] = Math.random() > 0.25 ? 6 : 1
       }
 
       // 2. Propagate heat upwards with wind decay
@@ -56,7 +56,7 @@ export default function AsciiFireEffect({ onComplete, durationMs = 1800 }: Ascii
       }
     }
 
-    intervalId = setInterval(render, 35)
+    intervalId = setInterval(render, 30)
 
     const timer = setTimeout(() => {
       clearInterval(intervalId)
@@ -70,15 +70,17 @@ export default function AsciiFireEffect({ onComplete, durationMs = 1800 }: Ascii
   }, [durationMs, onComplete])
 
   return (
-    <div className="absolute inset-0 z-50 overflow-hidden rounded-3xl bg-slate-950/90 backdrop-blur-md flex items-center justify-center font-mono text-xs pointer-events-none">
+    <div className="absolute inset-0 z-50 overflow-hidden bg-transparent flex flex-col justify-end pointer-events-none">
+      {/* Real-time Paper Burning Flame Glow from Bottom */}
       <div 
         ref={canvasRef}
-        className="white-space-pre leading-[0.8] font-bold text-orange-500 text-shadow-glow text-center selection:bg-none"
+        className="white-space-pre leading-[0.75] font-bold text-orange-500 text-center selection:bg-none transform translate-y-2 drop-shadow-[0_0_25px_rgba(255,100,0,0.95)]"
         style={{
-          textShadow: '0 0 12px rgba(255, 69, 0, 0.9), 0 0 24px rgba(255, 140, 0, 0.7)'
+          textShadow: '0 0 15px rgba(255, 69, 0, 0.95), 0 0 30px rgba(255, 140, 0, 0.8), 0 0 45px rgba(255, 200, 0, 0.6)'
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-orange-600/20 via-transparent to-slate-950/80 pointer-events-none" />
+      {/* Burning Ember Shadow & Heat Gradient */}
+      <div className="absolute inset-x-0 bottom-0 h-3/4 bg-gradient-to-t from-orange-600/40 via-amber-500/20 to-transparent pointer-events-none" />
     </div>
   )
 }

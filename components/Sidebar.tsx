@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Database, FileText, Menu, X, ShieldCheck, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Home, Database, FileText, Menu, X, ShieldCheck, ChevronLeft, ChevronRight } from 'lucide-react'
+import AllianceIndiaLogo from './AllianceIndiaLogo'
 
 const navigation = [
   { name: 'Dashboard', href: '/', icon: Home, badge: 'Overview' },
@@ -38,20 +39,10 @@ export default function Sidebar() {
       >
         <div>
           {/* Logo & Header */}
-          <div className={`px-4 py-6 border-b border-slate-100 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
-            <div className="flex items-center gap-3">
-              <div className="w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/25 ring-4 ring-indigo-50 flex-shrink-0">
-                <Sparkles className="w-6 h-6 text-white animate-pulse" />
-              </div>
-              {!isCollapsed && (
-                <div>
-                  <h1 className="text-lg font-black tracking-tight text-slate-900 flex items-center gap-1.5 font-sans">
-                    Files Transmitter
-                  </h1>
-                  <p className="text-[11px] font-bold text-indigo-600/80 uppercase tracking-wider">Alliance India</p>
-                </div>
-              )}
-            </div>
+          <div className={`px-4 py-5 border-b border-slate-100 flex items-center ${isCollapsed ? 'justify-center' : 'justify-between'}`}>
+            <Link href="/" className="flex items-center gap-3">
+              <AllianceIndiaLogo collapsed={isCollapsed} />
+            </Link>
 
             {/* Collapse Toggle Button (Desktop) */}
             <button
