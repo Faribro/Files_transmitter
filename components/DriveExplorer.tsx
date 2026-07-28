@@ -5,8 +5,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
   Folder, FolderOpen, FileText, Image as ImageIcon, Search, ChevronRight,
   HardDrive, Download, ExternalLink, ArrowLeft, RefreshCw, CheckCircle,
-  AlertTriangle, LayoutGrid, List, SortAsc, FolderPlus, Upload,
-  ChevronDown, File, X, Calendar, Building2, ShieldAlert, ShieldCheck
+  AlertTriangle, LayoutGrid, List, FolderPlus, Upload,
+  X, Calendar, Building2, ShieldAlert, ShieldCheck, Flame
 } from 'lucide-react'
 import DicomViewer from './DicomViewer'
 import PdfReportViewer from './PdfReportViewer'
@@ -28,6 +28,12 @@ interface PatientFolder {
   pdf_name:   string
 }
 
+interface MonthConfig {
+  key: string
+  label: string
+  desc: string
+}
+
 interface DateItem {
   date: string
   total_patients: number
@@ -44,21 +50,52 @@ interface FacilityItem {
 }
 
 interface DriveExplorerProps {
-  facility?:       'AKROSS' | 'DAVO'
+  facility:        'AKROSS' | 'DAVO'
   initialMonth?:   string
   onMonthSelect?:  (month: string) => void
 }
 
-function fmtBytes(b: number) {
-  if (b >= 1073741824) return `${(b / 1073741824).toFixed(1)} GB`
-  if (b >= 1048576)    return `${(b / 1048576).toFixed(1)} MB`
-  if (b >= 1024)       return `${(b / 1024).toFixed(1)} KB`
-  return `${b} B`
+const FACILITY_MONTHS: Record<string, MonthConfig[]> = {
+  AKROSS: [
+    { key: '2026-01', label: 'Jan 2026', desc: 'January 2026' },
+    { key: '2026-02', label: 'Feb 2026', desc: 'February 2026' },
+    { key: '2026-03', label: 'Mar 2026', desc: 'March 2026' },
+    { key: '2026-04', label: 'Apr 2026', desc: 'April 2026' },
+  ],
+  DAVO: [
+    { key: '2026-01', label: 'Jan 2026', desc: 'January 2026' },
+    { key: '2026-02', label: 'Feb 2026', desc: 'February 2026' },
+    { key: '2026-03', label: 'Mar 2026', desc: 'March 2026' },
+    { key: '2026-04', label: 'Apr 2026', desc: 'April 2026' },
+    { key: '2026-05', label: 'May 2026', desc: 'May 2026' },
+    { key: '2026-06', label: 'Jun 2026', desc: 'June 2026' },
+    { key: '2026-07', label: 'Jul 2026', desc: 'July 2026' },
+  ],
 }
+
+const MONTH_STATS: Record<string, Record<string, { dcm: number; pdf: number; patients: number }>> = {
+  AKROSS: {
+    '2026-01': { dcm: 7356,  pdf: 6098, patients: 7356 },
+    '2026-02': { dcm: 27698, pdf: 3050, patients: 27698 },
+    '2026-03': { dcm: 2900,  pdf: 750,  patients: 2900  },
+    '2026-04': { dcm: 32,    pdf: 3010, patients: 3010  },
+  },
+  DAVO: {
+    '2026-01': { dcm: 75,   pdf: 77,   patients: 152   },
+    '2026-02': { dcm: 3751, pdf: 3678, patients: 3751  },
+    '2026-03': { dcm: 4834, pdf: 4955, patients: 4834  },
+    '2026-04': { dcm: 6655, pdf: 6809, patients: 6655  },
+    '2026-05': { dcm: 9102, pdf: 9540, patients: 9102  },
+    '2026-06': { dcm: 9319, pdf: 9574, patients: 9319  },
+    '2026-07': { dcm: 184,  pdf: 165,  patients: 349   },
+  },
+}
+
 function fmtNum(n: number) { return (n || 0).toLocaleString() }
 
-export default function DriveExplorer({ facility }: DriveExplorerProps) {
+export default function DriveExplorer({ facility, initialMonth, onMonthSelect }: DriveExplorerProps) {
   // Navigation hierarchy state
+  const [selectedMonth,    setSelectedMonth]    = useState<string | null>(initialMonth || null)
   const [selectedDate,     setSelectedDate]     = useState<string | null>(null)
   const [selectedFacility, setSelectedFacility] = useState<string | null>(null)
   const [selectedStatus,   setSelectedStatus]   = useState<'Suspected' | 'Not Suspected' | null>(null)
@@ -70,16 +107,33 @@ export default function DriveExplorer({ facility }: DriveExplorerProps) {
   const [patientList,      setPatientList]      = useState<PatientFolder[]>([])
   
   const [loading,          setLoading]          = useState(false)
-  const [error,            setError]            = useState('')
   const [searchQuery,      setSearchQuery]      = useState('')
   const [viewMode,         setViewMode]         = useState<'grid' | 'list'>('grid')
+  const [isBurning,        setIsBurning]        = useState(false)
   const [page,             setPage]             = useState(1)
   const [hasMore,          setHasMore]          = useState(false)
 
-  // 1. Fetch available dates (Level 1)
+  const months = FACILITY_MONTHS[facility] || FACILITY_MONTHS.AKROSS
+
+  // Fire burn animation on month click
+  const handleMonthClick = (monthKey: string) => {
+    setIsBurning(true)
+    setTimeout(() => {
+      setSelectedMonth(monthKey)
+      setSelectedDate(null)
+      setSelectedFacility(null)
+      setSelectedStatus(null)
+      setSelectedPatient(null)
+      setIsBurning(false)
+      if (onMonthSelect) onMonthSelect(monthKey)
+    }, 1800)
+  }
+
+  // 1. Fetch dates for selected month (Level 2)
   useEffect(() => {
+    if (!selectedMonth) return
     setLoading(true)
-    fetch('/api/v1/patients')
+    fetch(`/api/v1/patients?month=${encodeURIComponent(selectedMonth)}`)
       .then(res => res.json())
       .then(data => {
         setDateList(data.dates || [])
@@ -87,12 +141,11 @@ export default function DriveExplorer({ facility }: DriveExplorerProps) {
       })
       .catch(err => {
         console.error('Failed to load dates:', err)
-        setError('Failed to load dates')
         setLoading(false)
       })
-  }, [])
+  }, [selectedMonth])
 
-  // 2. Fetch facilities when date selected (Level 2)
+  // 2. Fetch facilities when date selected (Level 3)
   useEffect(() => {
     if (!selectedDate) {
       setFacilityList([])
@@ -111,7 +164,7 @@ export default function DriveExplorer({ facility }: DriveExplorerProps) {
       })
   }, [selectedDate])
 
-  // 3. Fetch patients when status category selected (Level 4)
+  // 3. Fetch patients when status category selected (Level 5)
   const fetchPatients = useCallback((dateStr: string, facStr: string, statusStr: string, pg: number) => {
     setLoading(true)
     fetch(
@@ -143,7 +196,6 @@ export default function DriveExplorer({ facility }: DriveExplorerProps) {
     fetchPatients(selectedDate, selectedFacility, selectedStatus, 1)
   }, [selectedDate, selectedFacility, selectedStatus, fetchPatients])
 
-  // Filtered patients
   const filteredPatients = patientList.filter(p =>
     p.patient_id.toLowerCase().includes(searchQuery.toLowerCase())
   )
@@ -151,18 +203,42 @@ export default function DriveExplorer({ facility }: DriveExplorerProps) {
   return (
     <div className="bg-white/80 backdrop-blur-2xl border border-white/80 rounded-3xl shadow-2xl shadow-indigo-500/10 overflow-hidden">
       
+      {/* ── FIRE BURN ANIMATION EFFECT ─────────────────────────────────── */}
+      <AnimatePresence>
+        {isBurning && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="px-6 pt-4">
+            <AsciiFireEffect durationMs={1800} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* ── BREADCRUMB TOOLBAR ─────────────────────────────────────────── */}
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 px-6 py-4 border-b border-slate-100 bg-slate-50/60">
         <div className="flex items-center gap-1.5 text-xs font-bold text-slate-600 overflow-x-auto flex-1 min-w-0">
           <HardDrive className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+          
           <button
-            onClick={() => { setSelectedDate(null); setSelectedFacility(null); setSelectedStatus(null); setSelectedPatient(null) }}
+            onClick={() => { setSelectedMonth(null); setSelectedDate(null); setSelectedFacility(null); setSelectedStatus(null); setSelectedPatient(null) }}
             className={`px-2.5 py-1 rounded-lg text-[11px] font-black transition-all ${
-              !selectedDate ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-500/30' : 'hover:bg-slate-200 text-slate-600'
+              !selectedMonth ? 'bg-indigo-600 text-white shadow-sm' : 'hover:bg-slate-200 text-slate-600'
             }`}
           >
-            All Dates
+            {facility}
           </button>
+
+          {selectedMonth && (
+            <>
+              <ChevronRight className="w-3 h-3 text-slate-300 flex-shrink-0" />
+              <button
+                onClick={() => { setSelectedDate(null); setSelectedFacility(null); setSelectedStatus(null); setSelectedPatient(null) }}
+                className={`px-2.5 py-1 rounded-lg text-[11px] font-black transition-all ${
+                  !selectedDate ? 'bg-indigo-600 text-white shadow-sm' : 'hover:bg-slate-200 text-slate-600'
+                }`}
+              >
+                {selectedMonth}
+              </button>
+            </>
+          )}
 
           {selectedDate && (
             <>
@@ -170,7 +246,7 @@ export default function DriveExplorer({ facility }: DriveExplorerProps) {
               <button
                 onClick={() => { setSelectedFacility(null); setSelectedStatus(null); setSelectedPatient(null) }}
                 className={`px-2.5 py-1 rounded-lg text-[11px] font-black transition-all ${
-                  !selectedFacility ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-500/30' : 'hover:bg-slate-200 text-slate-600'
+                  !selectedFacility ? 'bg-indigo-600 text-white shadow-sm' : 'hover:bg-slate-200 text-slate-600'
                 }`}
               >
                 {selectedDate}
@@ -184,7 +260,7 @@ export default function DriveExplorer({ facility }: DriveExplorerProps) {
               <button
                 onClick={() => { setSelectedStatus(null); setSelectedPatient(null) }}
                 className={`px-2.5 py-1 rounded-lg text-[11px] font-black transition-all ${
-                  !selectedStatus ? 'bg-indigo-600 text-white shadow-sm shadow-indigo-500/30' : 'hover:bg-slate-200 text-slate-600'
+                  !selectedStatus ? 'bg-indigo-600 text-white shadow-sm' : 'hover:bg-slate-200 text-slate-600'
                 }`}
               >
                 {selectedFacility}
@@ -246,13 +322,58 @@ export default function DriveExplorer({ facility }: DriveExplorerProps) {
       <div className="p-6">
 
         {/* ══════════════════════════════════════════════════════════════════ */}
-        {/* LEVEL 1 — DATE DIRECTORIES */}
+        {/* LEVEL 1 — MONTH DIRECTORIES */}
         {/* ══════════════════════════════════════════════════════════════════ */}
-        {!selectedDate && (
+        {!selectedMonth && (
           <div className="space-y-4">
             <p className="text-[11px] font-black text-indigo-600 uppercase tracking-widest">
-              Select Date Directory
+              Select Month Directory — {facility}
             </p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {months.map((mf, i) => {
+                const stats = MONTH_STATS[facility]?.[mf.key]
+                return (
+                  <motion.button
+                    key={mf.key}
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.05 }}
+                    whileHover={{ scale: 1.04, y: -3 }}
+                    whileTap={{ scale: 0.97 }}
+                    onClick={() => handleMonthClick(mf.key)}
+                    className="group flex flex-col items-start p-5 rounded-2xl bg-white hover:bg-gradient-to-br hover:from-indigo-50 hover:to-purple-50 border border-slate-200/80 hover:border-indigo-300 shadow-sm hover:shadow-lg hover:shadow-indigo-500/10 transition-all text-left"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center mb-3 group-hover:bg-indigo-600 transition-colors">
+                      <Folder className="w-5 h-5 text-indigo-600 group-hover:text-white transition-colors" />
+                    </div>
+                    <h3 className="text-sm font-black text-slate-900 group-hover:text-indigo-700">{mf.label}</h3>
+                    {stats && (
+                      <div className="mt-2 space-y-0.5">
+                        <p className="text-[10px] font-bold text-slate-400">{fmtNum(stats.patients)} patients</p>
+                        <p className="text-[10px] text-slate-400">{fmtNum(stats.dcm)} DCM · {fmtNum(stats.pdf)} PDF</p>
+                      </div>
+                    )}
+                    <div className="mt-3 flex items-center gap-1 text-[10px] font-extrabold text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <span>Open</span><ChevronRight className="w-3 h-3" />
+                    </div>
+                  </motion.button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        {/* LEVEL 2 — DATE DIRECTORIES */}
+        {/* ══════════════════════════════════════════════════════════════════ */}
+        {selectedMonth && !selectedDate && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <button onClick={() => setSelectedMonth(null)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-bold">
+                <ArrowLeft className="w-3.5 h-3.5" /> Back to Months
+              </button>
+              <p className="text-xs font-bold text-slate-500">Month: {selectedMonth}</p>
+            </div>
             {loading ? (
               <div className="py-16 text-center">
                 <RefreshCw className="w-7 h-7 text-indigo-600 animate-spin mx-auto mb-2" />
@@ -260,7 +381,7 @@ export default function DriveExplorer({ facility }: DriveExplorerProps) {
               </div>
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-                {dateList.map((d, i) => (
+                {dateList.map((d) => (
                   <motion.button
                     key={d.date}
                     whileHover={{ scale: 1.04, y: -2 }}
@@ -285,7 +406,7 @@ export default function DriveExplorer({ facility }: DriveExplorerProps) {
         )}
 
         {/* ══════════════════════════════════════════════════════════════════ */}
-        {/* LEVEL 2 — FACILITY DIRECTORIES */}
+        {/* LEVEL 3 — FACILITY DIRECTORIES */}
         {/* ══════════════════════════════════════════════════════════════════ */}
         {selectedDate && !selectedFacility && (
           <div className="space-y-4">
@@ -319,7 +440,7 @@ export default function DriveExplorer({ facility }: DriveExplorerProps) {
         )}
 
         {/* ══════════════════════════════════════════════════════════════════ */}
-        {/* LEVEL 3 — CLINICAL STATUS CATEGORY (Suspected vs Not Suspected) */}
+        {/* LEVEL 4 — CLINICAL STATUS CATEGORY (Suspected vs Not Suspected) */}
         {/* ══════════════════════════════════════════════════════════════════ */}
         {selectedDate && selectedFacility && !selectedStatus && (
           <div className="space-y-4">
@@ -364,7 +485,7 @@ export default function DriveExplorer({ facility }: DriveExplorerProps) {
         )}
 
         {/* ══════════════════════════════════════════════════════════════════ */}
-        {/* LEVEL 4 — PATIENT STUDY FOLDERS */}
+        {/* LEVEL 5 — PATIENT STUDY FOLDERS */}
         {/* ══════════════════════════════════════════════════════════════════ */}
         {selectedDate && selectedFacility && selectedStatus && !selectedPatient && (
           <div className="space-y-4">
@@ -385,7 +506,7 @@ export default function DriveExplorer({ facility }: DriveExplorerProps) {
             ) : (
               <>
                 <div className={viewMode === 'grid' ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3' : 'space-y-1'}>
-                  {filteredPatients.map((p, i) => (
+                  {filteredPatients.map((p) => (
                     <motion.button
                       key={p.patient_id}
                       whileHover={{ scale: 1.03 }}
@@ -424,7 +545,7 @@ export default function DriveExplorer({ facility }: DriveExplorerProps) {
         )}
 
         {/* ══════════════════════════════════════════════════════════════════ */}
-        {/* LEVEL 5 — DUAL DICOM + PDF STUDY VIEWER */}
+        {/* LEVEL 6 — DUAL DICOM + PDF STUDY VIEWER */}
         {/* ══════════════════════════════════════════════════════════════════ */}
         {selectedPatient && (
           <div className="space-y-5">

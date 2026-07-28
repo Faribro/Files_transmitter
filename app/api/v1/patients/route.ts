@@ -3,6 +3,7 @@ import { HIERARCHY_DATA } from './patientsData'
 
 export async function GET(request: NextRequest) {
   const { searchParams } = request.nextUrl
+  const monthParam    = searchParams.get('month')
   const dateParam     = searchParams.get('date')
   const facilityParam = searchParams.get('facility')
   const statusParam   = searchParams.get('status')
@@ -11,11 +12,12 @@ export async function GET(request: NextRequest) {
   const offset        = (page - 1) * limit
 
   try {
-    const dates = Object.keys(HIERARCHY_DATA).sort().reverse()
+    const allDates = Object.keys(HIERARCHY_DATA).sort().reverse()
 
-    // 1. If no date requested, return list of available dates with metrics
-    if (!dateParam) {
-      const dateList = dates.map(d => {
+    // 1. If month requested (e.g. '2026-01'), return dates belonging to that month
+    if (monthParam && !dateParam) {
+      const monthDates = allDates.filter(d => d.startsWith(monthParam))
+      const dateList = monthDates.map(d => {
         const facs = HIERARCHY_DATA[d] || {}
         let sCnt = 0
         let nsCnt = 0
@@ -33,14 +35,15 @@ export async function GET(request: NextRequest) {
       })
 
       return NextResponse.json({
+        month: monthParam,
         dates: dateList,
         total_dates: dateList.length
       })
     }
 
     // 2. If date requested but no facility, return facilities for that date
-    const dateObj = HIERARCHY_DATA[dateParam] || {}
-    if (!facilityParam) {
+    if (dateParam && !facilityParam) {
+      const dateObj = HIERARCHY_DATA[dateParam] || {}
       const facilityList = Object.keys(dateObj).map(fName => {
         const fObj = dateObj[fName] || {}
         const sCnt = (fObj['Suspected'] || []).length
@@ -59,10 +62,10 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // 3. If date and facility requested, return status counts or patient list
-    const facObj = dateObj[facilityParam] || { 'Suspected': [], 'Not Suspected': [] }
-
-    if (!statusParam) {
+    // 3. If date & facility requested, return status categories
+    if (dateParam && facilityParam && !statusParam) {
+      const dateObj = HIERARCHY_DATA[dateParam] || {}
+      const facObj = dateObj[facilityParam] || { 'Suspected': [], 'Not Suspected': [] }
       return NextResponse.json({
         date: dateParam,
         facility: facilityParam,
@@ -73,20 +76,30 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // 4. Return paginated patient folders under specific status
-    const categoryKey = statusParam === 'Suspected' ? 'Suspected' : 'Not Suspected'
-    const patientList: any[] = facObj[categoryKey] || []
-    const paginated = patientList.slice(offset, offset + limit)
+    // 4. Return paginated patient study folders for specific status
+    if (dateParam && facilityParam && statusParam) {
+      const dateObj = HIERARCHY_DATA[dateParam] || {}
+      const facObj = dateObj[facilityParam] || { 'Suspected': [], 'Not Suspected': [] }
+      const categoryKey = statusParam === 'Suspected' ? 'Suspected' : 'Not Suspected'
+      const patientList: any[] = facObj[categoryKey] || []
+      const paginated = patientList.slice(offset, offset + limit)
 
+      return NextResponse.json({
+        date: dateParam,
+        facility: facilityParam,
+        status: categoryKey,
+        total: patientList.length,
+        page,
+        limit,
+        patients: paginated,
+        has_more: offset + limit < patientList.length
+      })
+    }
+
+    // Default fallback: return month summary
     return NextResponse.json({
-      date: dateParam,
-      facility: facilityParam,
-      status: categoryKey,
-      total: patientList.length,
-      page,
-      limit,
-      patients: paginated,
-      has_more: offset + limit < patientList.length
+      dates: allDates.slice(0, 30),
+      total_dates: allDates.length
     })
 
   } catch (err: any) {
