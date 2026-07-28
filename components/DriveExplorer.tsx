@@ -203,6 +203,7 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
   )
 
   const monthStatObj = selectedMonth ? MONTH_STATS[facility]?.[selectedMonth] : null
+  const selectedFacilityObj = facilityList.find(f => f.facility === selectedFacility)
 
   return (
     <div className="bg-white/80 backdrop-blur-2xl border border-white/80 rounded-3xl shadow-2xl shadow-indigo-500/10 overflow-hidden">
@@ -466,13 +467,20 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
         {selectedDate && selectedFacility && !selectedStatus && (
           <div className="space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-slate-100">
-              <button onClick={() => setSelectedFacility(null)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors">
-                <ArrowLeft className="w-3.5 h-3.5" /> Back to Facilities
-              </button>
-              <p className="text-xs font-bold text-slate-600">
+              <div className="flex items-center gap-3">
+                <button onClick={() => setSelectedFacility(null)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors">
+                  <ArrowLeft className="w-3.5 h-3.5" /> Back to Facilities
+                </button>
+                <p className="text-xs font-bold text-slate-600">
+                  {fmtNum(selectedFacilityObj?.total_patients || 0)} patient folders · showing 2 clinical categories
+                  {selectedFacilityObj && ` · 🔴 ${fmtNum(selectedFacilityObj.suspected_count)} Suspected · 🟢 ${fmtNum(selectedFacilityObj.not_suspected_count)} Normal`}
+                </p>
+              </div>
+              <span className="text-xs font-black text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1 rounded-xl self-start sm:self-auto">
                 {selectedDate} · {selectedFacility}
-              </p>
+              </span>
             </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
               {/* 🔴 SUSPECTED FOLDER */}
               <motion.button
@@ -518,12 +526,12 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
                   <ArrowLeft className="w-3.5 h-3.5" /> Back to Categories
                 </button>
                 <p className="text-xs font-bold text-slate-600">
-                  {fmtNum(totalPatients)} patient folders · showing {fmtNum(filteredPatients.length)}
+                  {fmtNum(totalPatients)} patient folders · showing {fmtNum(filteredPatients.length)} patient directories
                 </p>
               </div>
-              <p className="text-xs font-bold text-slate-500">
+              <span className="text-xs font-black text-indigo-600 bg-indigo-50 border border-indigo-100 px-3 py-1 rounded-xl self-start sm:self-auto">
                 {selectedDate} · {selectedFacility} · {selectedStatus === 'Suspected' ? '🔴 Suspected' : '🟢 Not Suspected'}
-              </p>
+              </span>
             </div>
 
             {loading && patientList.length === 0 ? (
