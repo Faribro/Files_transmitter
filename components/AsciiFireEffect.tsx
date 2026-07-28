@@ -7,22 +7,21 @@ interface AsciiFireEffectProps {
   durationMs?: number
 }
 
-export default function AsciiFireEffect({ onComplete, durationMs = 2500 }: AsciiFireEffectProps) {
+export default function AsciiFireEffect({ onComplete, durationMs = 1800 }: AsciiFireEffectProps) {
   const canvasRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const width = 60
-    const height = 18
+    const width = 80
+    const height = 16
     const firePixels = new Array(width * height).fill(0)
     const ramp = [" ", ".", ":", "░", "▒", "▓", "█"]
 
-    let animationFrameId: number
     let intervalId: NodeJS.Timeout
 
     function updateFire() {
       // 1. Generate heat at bottom row
       for (let x = 0; x < width; x++) {
-        firePixels[(height - 1) * width + x] = Math.random() > 0.35 ? 6 : 1
+        firePixels[(height - 1) * width + x] = Math.random() > 0.3 ? 6 : 1
       }
 
       // 2. Propagate heat upwards with wind decay
@@ -57,7 +56,7 @@ export default function AsciiFireEffect({ onComplete, durationMs = 2500 }: Ascii
       }
     }
 
-    intervalId = setInterval(render, 40)
+    intervalId = setInterval(render, 35)
 
     const timer = setTimeout(() => {
       clearInterval(intervalId)
@@ -71,18 +70,15 @@ export default function AsciiFireEffect({ onComplete, durationMs = 2500 }: Ascii
   }, [durationMs, onComplete])
 
   return (
-    <div className="relative w-full overflow-hidden rounded-3xl bg-slate-950 p-4 border border-orange-500/30 shadow-2xl shadow-orange-500/20 font-mono text-xs">
+    <div className="absolute inset-0 z-50 overflow-hidden rounded-3xl bg-slate-950/90 backdrop-blur-md flex items-center justify-center font-mono text-xs pointer-events-none">
       <div 
         ref={canvasRef}
         className="white-space-pre leading-[0.8] font-bold text-orange-500 text-shadow-glow text-center selection:bg-none"
         style={{
-          textShadow: '0 0 10px rgba(255, 69, 0, 0.8), 0 0 20px rgba(255, 140, 0, 0.5)'
+          textShadow: '0 0 12px rgba(255, 69, 0, 0.9), 0 0 24px rgba(255, 140, 0, 0.7)'
         }}
       />
-      <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-slate-950/80 pointer-events-none" />
-      <p className="text-center text-[10px] font-extrabold uppercase tracking-widest text-orange-400 mt-2 animate-pulse">
-        🔥 Dissolving Top Banner & Opening Month Directory...
-      </p>
+      <div className="absolute inset-0 bg-gradient-to-t from-orange-600/20 via-transparent to-slate-950/80 pointer-events-none" />
     </div>
   )
 }

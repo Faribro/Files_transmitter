@@ -13,7 +13,7 @@ const navigation = [
 
 export default function Sidebar() {
   const [isMobileOpen, setIsMobileOpen] = useState(false)
-  const [isCollapsed, setIsCollapsed] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(true) // Closed manually by default for maximum canvas width
   const pathname = usePathname()
 
   return (

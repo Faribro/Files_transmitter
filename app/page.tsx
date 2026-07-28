@@ -13,7 +13,7 @@ export default function HomePage() {
     <div className="flex min-h-screen bg-gradient-to-br from-indigo-50/70 via-sky-50/50 to-purple-50/70 text-slate-900 font-sans">
       <Sidebar />
 
-      <main className="flex-1 lg:ml-64 p-6 md:p-8 space-y-8">
+      <main className="flex-1 lg:ml-20 p-6 md:p-8 space-y-8 transition-all duration-300">
         
         {/* HEADER */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-200/80">
