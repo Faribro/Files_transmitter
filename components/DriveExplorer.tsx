@@ -57,17 +57,17 @@ const FACILITY_MONTHS: Record<string, MonthConfig[]> = {
 
 const MONTH_STATS: Record<string, Record<string, { dcm: number; pdf: number; patients: number }>> = {
   AKROSS: {
-    '2026-01': { dcm: 7356,  pdf: 6098, patients: 8361  },
-    '2026-02': { dcm: 27589, pdf: 3050, patients: 24183 },
-    '2026-03': { dcm: 2900,  pdf: 750,  patients: 750   },
+    '2026-01': { dcm: 7356,  pdf: 6098, patients: 11416 },
+    '2026-02': { dcm: 27698, pdf: 3050, patients: 30056 },
+    '2026-03': { dcm: 2900,  pdf: 750,  patients: 3634  },
     '2026-04': { dcm: 32,    pdf: 3010, patients: 3004  },
   },
   DAVO: {
     '2026-01': { dcm: 75,   pdf: 77,   patients: 152   },
-    '2026-02': { dcm: 3751, pdf: 3678, patients: 7079  },
-    '2026-03': { dcm: 4834, pdf: 4955, patients: 8477  },
-    '2026-04': { dcm: 6655, pdf: 6809, patients: 10951 },
-    '2026-05': { dcm: 9102, pdf: 9540, patients: 15257 },
+    '2026-02': { dcm: 3751, pdf: 3678, patients: 7081  },
+    '2026-03': { dcm: 4834, pdf: 4955, patients: 8479  },
+    '2026-04': { dcm: 6655, pdf: 6809, patients: 10953 },
+    '2026-05': { dcm: 9102, pdf: 9540, patients: 15259 },
     '2026-06': { dcm: 9319, pdf: 9574, patients: 18893 },
     '2026-07': { dcm: 184,  pdf: 165,  patients: 349   },
   },
