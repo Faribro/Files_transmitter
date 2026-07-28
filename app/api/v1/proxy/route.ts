@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (!connectionString) {
-    return NextResponse.json({ error: 'Azure connection string not configured' }, { status: 500 })
+    return NextResponse.json({ error: 'Azure connection string not configured in env' }, { status: 500 })
   }
 
   try {
@@ -32,11 +32,11 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Blob content missing stream' }, { status: 500 })
     }
 
-    const contentType = fileUrl.toLowerCase().endsWith('.pdf')
-      ? 'application/pdf'
-      : fileUrl.toLowerCase().endsWith('.dcm')
-      ? 'application/dicom'
-      : 'application/octet-stream'
+    const isPdf = fileUrl.toLowerCase().endsWith('.pdf')
+    const isDcm = fileUrl.toLowerCase().endsWith('.dcm')
+
+    const contentType = isPdf ? 'application/pdf' : isDcm ? 'application/dicom' : 'application/octet-stream'
+    const filename = parts[parts.length - 1] || (isPdf ? 'report.pdf' : 'scan.dcm')
 
     const nodeStream = downloadResponse.readableStreamBody
     const webStream = new ReadableStream({
@@ -51,6 +51,7 @@ export async function GET(request: NextRequest) {
       status: 200,
       headers: {
         'Content-Type': contentType,
+        'Content-Disposition': `inline; filename="${filename}"`,
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
         'Cache-Control': 'public, max-age=31536000, immutable'

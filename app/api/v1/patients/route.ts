@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   const monthParam     = searchParams.get('month')
   const dateParam      = searchParams.get('date')
   const subFacParam    = searchParams.get('subfacility')
-  const statusParam    = searchParams.get('status')
+  const statusParam    = searchParams.get('status') // 'all' | 'Suspected' | 'Not Suspected'
   const page           = parseInt(searchParams.get('page') || '1')
   const limit          = Math.min(parseInt(searchParams.get('limit') || '60'), 200)
   const offset         = (page - 1) * limit
@@ -67,47 +67,43 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // 3. If date & subfacility requested, return status categories
-    if (monthParam && dateParam && subFacParam && !statusParam) {
+    // 3. If date & subfacility requested, return patients directly with filter option!
+    if (monthParam && dateParam && subFacParam) {
       const monthObj = parentObj[monthParam] || {}
       const dateObj = monthObj[dateParam] || {}
       const fObj = dateObj[subFacParam] || { 'Suspected': [], 'Not Suspected': [] }
-      return NextResponse.json({
-        facility: facilityParam,
-        month: monthParam,
-        date: dateParam,
-        subfacility: subFacParam,
-        categories: [
-          { status: 'Suspected', label: '🔴 Suspected (TB / Lesion Detected)', count: (fObj['Suspected'] || []).length },
-          { status: 'Not Suspected', label: '🟢 Not Suspected (Normal Examination)', count: (fObj['Not Suspected'] || []).length }
-        ]
-      })
-    }
 
-    // 4. Return paginated patient study folders for specific status
-    if (monthParam && dateParam && subFacParam && statusParam) {
-      const monthObj = parentObj[monthParam] || {}
-      const dateObj = monthObj[dateParam] || {}
-      const fObj = dateObj[subFacParam] || { 'Suspected': [], 'Not Suspected': [] }
-      const categoryKey = statusParam === 'Suspected' ? 'Suspected' : 'Not Suspected'
-      const patientList: any[] = fObj[categoryKey] || []
-      const paginated = patientList.slice(offset, offset + limit)
+      const suspectedList: any[] = fObj['Suspected'] || []
+      const notSuspectedList: any[] = fObj['Not Suspected'] || []
+
+      let combined: any[] = []
+      if (!statusParam || statusParam === 'all') {
+        combined = [...suspectedList, ...notSuspectedList]
+      } else if (statusParam === 'Suspected') {
+        combined = suspectedList
+      } else if (statusParam === 'Not Suspected') {
+        combined = notSuspectedList
+      }
+
+      const paginated = combined.slice(offset, offset + limit)
 
       return NextResponse.json({
         facility: facilityParam,
         month: monthParam,
         date: dateParam,
         subfacility: subFacParam,
-        status: categoryKey,
-        total: patientList.length,
+        status: statusParam || 'all',
+        total: combined.length,
+        suspected_count: suspectedList.length,
+        not_suspected_count: notSuspectedList.length,
         page,
         limit,
         patients: paginated,
-        has_more: offset + limit < patientList.length
+        has_more: offset + limit < combined.length
       })
     }
 
-    // Default fallback: return months summary for requested facility
+    // Default fallback
     return NextResponse.json({
       facility: facilityParam,
       months: Object.keys(parentObj)
