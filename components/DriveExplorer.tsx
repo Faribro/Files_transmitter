@@ -370,9 +370,9 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
                     </div>
                     <h3 className="text-xl font-black tracking-tight text-slate-900 group-hover:text-indigo-700">{mf.label}</h3>
                     {stats && (
-                      <div className="mt-2 space-y-0.5">
-                        <p className="text-[10px] font-bold text-slate-400">{fmtNum(stats.patients)} patients</p>
-                        <p className="text-[10px] text-slate-400">{fmtNum(stats.dcm)} DCM · {fmtNum(stats.pdf)} PDF</p>
+                      <div className="mt-2 space-y-1">
+                        <p className="text-sm font-extrabold text-indigo-950">{fmtNum(stats.patients)} patients</p>
+                        <p className="text-xs font-bold text-slate-600 bg-slate-100/90 px-2 py-0.5 rounded-md border border-slate-200">{fmtNum(stats.dcm)} DCM · {fmtNum(stats.pdf)} PDF</p>
                       </div>
                     )}
                     <div className="mt-3 flex items-center gap-1 text-[10px] font-extrabold text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">
