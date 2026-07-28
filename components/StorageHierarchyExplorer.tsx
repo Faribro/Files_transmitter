@@ -4,7 +4,7 @@ import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Folder, FolderOpen, FileText, Image as ImageIcon, Search, ChevronRight, ChevronDown,
-  HardDrive, Download, ExternalLink, Filter, CheckCircle2, AlertTriangle, Layers, Database, FolderTree
+  HardDrive, Download, ExternalLink, Filter, CheckCircle2, AlertTriangle, Layers, Database, FolderTree, AlertCircle
 } from 'lucide-react'
 import { HIERARCHY_DATA } from '@/app/api/v1/patients/patientsData'
 import DicomViewer from './DicomViewer'
@@ -15,8 +15,17 @@ const AKROSS_MONTHLY_REPORTS = [
   { month: '2026-01', name: 'January 2026', screenedTarget: 2613, suspectedTarget: 340, facilities: 2, status: 'Reconciled' },
   { month: '2026-02', name: 'February 2026', screenedTarget: 12848, suspectedTarget: 1053, facilities: 32, status: 'Reconciled' },
   { month: '2026-03', name: 'March 2026', screenedTarget: 14473, suspectedTarget: 571, facilities: 40, status: 'Reconciled' },
-  { month: '2026-04', name: 'April 2026', screenedTarget: 9668, suspectedTarget: 315, facilities: 51, status: 'Active Sync' },
+  { month: '2026-04', name: 'April 2026', screenedTarget: 9668, suspectedTarget: 315, facilities: 51, status: 'Reconciled' },
   { month: '2026-05', name: 'May 2026', screenedTarget: 9668, suspectedTarget: 315, facilities: 51, status: 'Scheduled' }
+]
+
+// Monthly Reporting targets extracted directly from DAVO Monthly PDFs (Jan - May 2026)
+const DAVO_MONTHLY_REPORTS = [
+  { month: '2026-01', name: 'January 2026', screenedTarget: 133, suspectedTarget: 5, facilities: 1, status: 'Reconciled' },
+  { month: '2026-02', name: 'February 2026', screenedTarget: 3613, suspectedTarget: 234, facilities: 4, status: 'Reconciled' },
+  { month: '2026-03', name: 'March 2026', screenedTarget: 5439, suspectedTarget: 325, facilities: 5, status: 'Reconciled' },
+  { month: '2026-04', name: 'April 2026', screenedTarget: 6737, suspectedTarget: 366, facilities: 9, status: 'Reconciled' },
+  { month: '2026-05', name: 'May 2026', screenedTarget: 9744, suspectedTarget: 524, facilities: 19, status: 'Active Sync' }
 ]
 
 export default function StorageHierarchyExplorer() {
@@ -24,10 +33,9 @@ export default function StorageHierarchyExplorer() {
   const [selectedMonth, setSelectedMonth] = useState<string>('ALL')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({
-    'containerprision': true,
-    'containerprision/Prison_and_OCS_Intervention': true,
-    'containerprision/Prison_and_OCS_Intervention/Medical_Files': true,
-    'AKROSS': true
+    'root': true,
+    'month_2026-01': true,
+    'month_2026-02': true
   })
 
   // Selected file for viewer modal
@@ -52,7 +60,9 @@ export default function StorageHierarchyExplorer() {
       monthKey: string,
       dates: Record<string, {
         dateKey: string,
-        patients: any[]
+        patients: any[],
+        dcmTotal: number,
+        pdfTotal: number
       }>
     }> = {}
 
@@ -68,7 +78,7 @@ export default function StorageHierarchyExplorer() {
         const datesObj = facObj[mKey] || {}
         Object.keys(datesObj).forEach(dKey => {
           if (!monthDataMap[mKey].dates[dKey]) {
-            monthDataMap[mKey].dates[dKey] = { dateKey: dKey, patients: [] }
+            monthDataMap[mKey].dates[dKey] = { dateKey: dKey, patients: [], dcmTotal: 0, pdfTotal: 0 }
           }
 
           const subfacs = datesObj[dKey] || {}
@@ -89,8 +99,15 @@ export default function StorageHierarchyExplorer() {
               }
 
               totalPatients++
-              if (p.dcm_count) totalDcms += p.dcm_count
-              if (p.pdf_count) totalPdfs += p.pdf_count
+              const dCount = p.dcm_count ?? 1
+              const pCount = p.pdf_count ?? 1
+              
+              totalDcms += dCount
+              totalPdfs += pCount
+
+              monthDataMap[mKey].dates[dKey].dcmTotal += dCount
+              monthDataMap[mKey].dates[dKey].pdfTotal += pCount
+
               if (p.status === 'Suspected') totalSuspected++
               else totalNotSuspected++
 
@@ -107,9 +124,12 @@ export default function StorageHierarchyExplorer() {
       totalDcms,
       totalPdfs,
       totalSuspected,
-      totalNotSuspected
+      totalNotSuspected,
+      mismatchCount: Math.abs(totalDcms - totalPdfs)
     }
   }, [selectedFacility, selectedMonth, searchQuery])
+
+  const currentBenchmarkReports = selectedFacility === 'DAVO' ? DAVO_MONTHLY_REPORTS : AKROSS_MONTHLY_REPORTS
 
   return (
     <div className="space-y-8">
@@ -121,13 +141,13 @@ export default function StorageHierarchyExplorer() {
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/20 border border-indigo-400/30 text-indigo-300 text-xs font-semibold mb-3">
               <HardDrive className="w-3.5 h-3.5" />
-              Azure Blob Storage Hierarchy Explorer
+              Azure Blob Storage Hierarchy Explorer ({selectedFacility})
             </div>
             <h1 className="text-3xl font-extrabold tracking-tight text-white">
-              Raw File & Directory Tree
+              Raw Directory & Loose File Reconciler
             </h1>
             <p className="text-sm text-slate-300 mt-1 max-w-2xl">
-              Exact 1-to-1 Azure Storage directory layout (<code className="text-indigo-300 font-mono text-xs bg-indigo-900/50 px-2 py-0.5 rounded">containerprision/Medical_Files/{selectedFacility}</code>) reconciled against official Monthly Reports (Jan – May 2026).
+              1-to-1 Azure Storage directory tree (<code className="text-indigo-300 font-mono text-xs bg-indigo-900/50 px-2 py-0.5 rounded">containerprision/Medical_Files/{selectedFacility}</code>) reconciled against official PDF Reports (Jan – May 2026).
             </p>
           </div>
 
@@ -153,56 +173,74 @@ export default function StorageHierarchyExplorer() {
         </div>
       </div>
 
-      {/* Monthly Reporting Benchmarks (AKROSS Reports Jan - May) */}
-      {selectedFacility === 'AKROSS' && (
-        <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-6 border border-slate-200/80 shadow-xl space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-indigo-600" />
-              <h2 className="text-lg font-bold text-slate-900">AKROSS Monthly PDF Reports Benchmark (Jan – May 2026)</h2>
+      {/* Loose Files / Count Mismatch Banner */}
+      {rawTree.mismatchCount > 0 && (
+        <div className="bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 border border-amber-400/40 rounded-2xl p-4 flex items-center justify-between gap-4 text-amber-900 shadow-sm">
+          <div className="flex items-center gap-3">
+            <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+            <div>
+              <span className="font-extrabold text-sm block text-amber-950">
+                Loose File Count Mismatch Detected ({selectedFacility})
+              </span>
+              <span className="text-xs text-amber-800">
+                Total DCM scans ({rawTree.totalDcms.toLocaleString()}) does not equal total PDF reports ({rawTree.totalPdfs.toLocaleString()}). Loose DCMs/PDFs are highlighted below with missing file badges.
+              </span>
             </div>
-            <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
-              Verified against extracted PDF data
-            </span>
           </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-            {AKROSS_MONTHLY_REPORTS.map(r => (
-              <div 
-                key={r.month} 
-                className={`p-4 rounded-2xl border transition-all ${
-                  selectedMonth === r.month 
-                    ? 'bg-indigo-50/90 border-indigo-300 shadow-md ring-2 ring-indigo-500/20' 
-                    : 'bg-slate-50/70 border-slate-200/80 hover:bg-slate-100/60'
-                }`}
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-bold text-slate-700">{r.name}</span>
-                  <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
-                    r.status === 'Reconciled' ? 'bg-emerald-100 text-emerald-800' : 'bg-indigo-100 text-indigo-800'
-                  }`}>
-                    {r.status}
-                  </span>
-                </div>
-                <div className="space-y-1 text-xs text-slate-600">
-                  <div className="flex justify-between">
-                    <span>Target Screened:</span>
-                    <span className="font-bold text-slate-900">{r.screenedTarget.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>TB Suspected:</span>
-                    <span className="font-bold text-rose-600">{r.suspectedTarget.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Facilities:</span>
-                    <span className="font-semibold text-slate-700">{r.facilities}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <span className="px-3 py-1 bg-amber-600 text-white font-black text-xs rounded-full flex-shrink-0">
+            {rawTree.mismatchCount.toLocaleString()} Loose Files
+          </span>
         </div>
       )}
+
+      {/* Monthly Reporting Benchmarks (Jan - May 2026) */}
+      <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-6 border border-slate-200/80 shadow-xl space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-5 h-5 text-indigo-600" />
+            <h2 className="text-lg font-bold text-slate-900">{selectedFacility} Monthly PDF Reports Benchmark (Jan – May 2026)</h2>
+          </div>
+          <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
+            Extracted directly from {selectedFacility} PDF Reports
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+          {currentBenchmarkReports.map(r => (
+            <div 
+              key={r.month} 
+              className={`p-4 rounded-2xl border transition-all ${
+                selectedMonth === r.month 
+                  ? 'bg-indigo-50/90 border-indigo-300 shadow-md ring-2 ring-indigo-500/20' 
+                  : 'bg-slate-50/70 border-slate-200/80 hover:bg-slate-100/60'
+              }`}
+            >
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-bold text-slate-700">{r.name}</span>
+                <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
+                  r.status === 'Reconciled' ? 'bg-emerald-100 text-emerald-800' : 'bg-indigo-100 text-indigo-800'
+                }`}>
+                  {r.status}
+                </span>
+              </div>
+              <div className="space-y-1 text-xs text-slate-600">
+                <div className="flex justify-between">
+                  <span>Target Screened:</span>
+                  <span className="font-bold text-slate-900">{r.screenedTarget.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>TB Suspected:</span>
+                  <span className="font-bold text-rose-600">{r.suspectedTarget.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Facilities:</span>
+                  <span className="font-semibold text-slate-700">{r.facilities}</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Filter Bar */}
       <div className="bg-white/90 backdrop-blur-xl rounded-2xl p-4 border border-slate-200/80 shadow-md flex flex-col md:flex-row items-center justify-between gap-4">
@@ -261,8 +299,8 @@ export default function StorageHierarchyExplorer() {
             <FolderTree className="w-5 h-5 text-indigo-600" />
             <span className="font-bold text-slate-900 text-sm">Azure Storage Virtual Directory Layout</span>
           </div>
-          <span className="text-xs text-slate-400 font-mono">
-            /containerprision/Prison_and_OCS_Intervention/Medical_Files/{selectedFacility}
+          <span className="text-xs text-slate-500 font-mono font-bold bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
+            {rawTree.totalPatients.toLocaleString()} patient folders · showing {Object.keys(rawTree.monthDataMap).length} month folders · {rawTree.totalDcms.toLocaleString()} DCM · {rawTree.totalPdfs.toLocaleString()} PDF
           </span>
         </div>
 
@@ -291,7 +329,13 @@ export default function StorageHierarchyExplorer() {
                   const mExpandedKey = `month_${mKey}`
 
                   let mTotalPats = 0
-                  Object.values(mObj.dates).forEach(d => { mTotalPats += d.patients.length })
+                  let mTotalDcms = 0
+                  let mTotalPdfs = 0
+                  Object.values(mObj.dates).forEach(d => { 
+                    mTotalPats += d.patients.length 
+                    mTotalDcms += d.dcmTotal
+                    mTotalPdfs += d.pdfTotal
+                  })
 
                   return (
                     <div key={mKey} className="space-y-2">
@@ -308,7 +352,7 @@ export default function StorageHierarchyExplorer() {
                           </span>
                         </div>
                         <span className="text-xs font-semibold text-slate-500">
-                          {mTotalPats} patient folders
+                          {mTotalPats.toLocaleString()} patient folders · {mTotalDcms.toLocaleString()} DCM · {mTotalPdfs.toLocaleString()} PDF
                         </span>
                       </div>
 
@@ -334,7 +378,7 @@ export default function StorageHierarchyExplorer() {
                                     </span>
                                   </div>
                                   <span className="text-xs text-slate-500 font-semibold">
-                                    {dObj.patients.length} patient folders
+                                    {dObj.patients.length.toLocaleString()} patient folders · {dObj.dcmTotal.toLocaleString()} DCM · {dObj.pdfTotal.toLocaleString()} PDF
                                   </span>
                                 </div>
 
@@ -360,10 +404,20 @@ export default function StorageHierarchyExplorer() {
                                               }`}>
                                                 {p.status}
                                               </span>
+                                              {p.pdf_count === 0 && (
+                                                <span className="text-[10px] font-bold bg-amber-500 text-white px-2 py-0.5 rounded-full flex items-center gap-1">
+                                                  <AlertTriangle className="w-3 h-3" /> Loose DCM (Missing PDF)
+                                                </span>
+                                              )}
+                                              {p.dcm_count === 0 && (
+                                                <span className="text-[10px] font-bold bg-amber-500 text-white px-2 py-0.5 rounded-full flex items-center gap-1">
+                                                  <AlertTriangle className="w-3 h-3" /> Loose PDF (Missing DCM)
+                                                </span>
+                                              )}
                                             </div>
                                             <div className="text-[11px] opacity-75 flex flex-wrap items-center gap-3 mt-1">
-                                              <span>DCM: <code className="font-mono">{p.dcm_name}</code></span>
-                                              <span>PDF: <code className="font-mono">{p.pdf_name}</code></span>
+                                              <span>DCM: <code className="font-mono">{p.dcm_name || 'Missing'}</code></span>
+                                              <span>PDF: <code className="font-mono">{p.pdf_name || 'Missing'}</code></span>
                                             </div>
                                           </div>
                                         </div>

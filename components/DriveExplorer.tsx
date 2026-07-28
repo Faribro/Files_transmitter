@@ -73,22 +73,33 @@ const FACILITY_MONTHS: Record<string, MonthConfig[]> = {
   ],
 }
 
-const MONTH_STATS: Record<string, Record<string, { dcm: number; pdf: number; patients: number }>> = {
-  AKROSS: {
-    '2026-01': { dcm: 7356,  pdf: 6098, patients: 7356 },
-    '2026-02': { dcm: 27698, pdf: 3050, patients: 27698 },
-    '2026-03': { dcm: 2900,  pdf: 750,  patients: 2900  },
-    '2026-04': { dcm: 32,    pdf: 3010, patients: 3010  },
-  },
-  DAVO: {
-    '2026-01': { dcm: 75,   pdf: 77,   patients: 152   },
-    '2026-02': { dcm: 3751, pdf: 3678, patients: 3751  },
-    '2026-03': { dcm: 4834, pdf: 4955, patients: 4834  },
-    '2026-04': { dcm: 6655, pdf: 6809, patients: 6655  },
-    '2026-05': { dcm: 9102, pdf: 9540, patients: 9102  },
-    '2026-06': { dcm: 9319, pdf: 9574, patients: 9319  },
-    '2026-07': { dcm: 184,  pdf: 165,  patients: 349   },
-  },
+import { HIERARCHY_DATA } from '@/app/api/v1/patients/patientsData'
+
+// Compute month stats dynamically from HIERARCHY_DATA to ensure 100% unified numbers across all tabs
+function getDynamicMonthStats(parentFacility: string, monthKey: string) {
+  const facData = HIERARCHY_DATA[parentFacility]?.[monthKey] || {}
+  let totalPatients = 0
+  let totalDcm = 0
+  let totalPdf = 0
+
+  Object.values(facData).forEach((dateObj: any) => {
+    Object.values(dateObj).forEach((subfacObj: any) => {
+      const suspected = subfacObj?.['Suspected'] || []
+      const notSuspected = subfacObj?.['Not Suspected'] || []
+      const dcmTotal = subfacObj?.['dcm_total'] ?? (suspected.length + notSuspected.length)
+      const pdfTotal = subfacObj?.['pdf_total'] ?? (suspected.length + notSuspected.length)
+      
+      totalPatients += (subfacObj?.['total_count'] ?? (suspected.length + notSuspected.length))
+      totalDcm += dcmTotal
+      totalPdf += pdfTotal
+    })
+  })
+
+  return {
+    dcm: totalDcm,
+    pdf: totalPdf,
+    patients: totalPatients
+  }
 }
 
 function fmtNum(n: number) { return (n || 0).toLocaleString() }
@@ -216,7 +227,7 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
     p.patient_id.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  const monthStatObj = selectedMonth ? MONTH_STATS[facility]?.[selectedMonth] : null
+  const monthStatObj = selectedMonth ? getDynamicMonthStats(facility, selectedMonth) : null
   const selectedFacilityObj = facilityList.find(f => f.facility === selectedFacility)
 
   return (
@@ -334,7 +345,7 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {months.map((mf, i) => {
-                const stats = MONTH_STATS[facility]?.[mf.key]
+                const stats = getDynamicMonthStats(facility, mf.key)
                 return (
                   <motion.button
                     key={mf.key}
