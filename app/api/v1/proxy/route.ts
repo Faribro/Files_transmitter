@@ -12,16 +12,24 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // 1. Strip any existing query string or truncated SAS token from the blob URL
-    const cleanUrl = rawUrl.split('?')[0]
+    // 1. Decode rawUrl if double-encoded and strip any existing query string
+    const decodedUrl = decodeURIComponent(rawUrl)
+    const cleanUrl = decodedUrl.split('?')[0]
 
-    // 2. Append pristine, un-corrupted SAS token for Azure Storage
-    let targetUrl = cleanUrl
-    if (cleanUrl.includes('storageaccountprision.blob.core.windows.net')) {
-      targetUrl = `${cleanUrl}?${AZURE_SAS_TOKEN}`
+    // 2. Properly URL-encode path spaces while preserving protocol & domain slashes
+    const parts = cleanUrl.split('/')
+    const encodedParts = parts.map((part, idx) => {
+      if (idx < 3) return part // keep https://domain
+      return encodeURIComponent(part)
+    })
+    const encodedCleanUrl = encodedParts.join('/')
+
+    // 3. Append pristine SAS token
+    let targetUrl = encodedCleanUrl
+    if (encodedCleanUrl.includes('storageaccountprision.blob.core.windows.net')) {
+      targetUrl = `${encodedCleanUrl}?${AZURE_SAS_TOKEN}`
     }
 
-    // 3. Fetch binary stream directly from Azure
     const azureRes = await fetch(targetUrl, {
       method: 'GET',
       headers: {
@@ -31,7 +39,7 @@ export async function GET(request: NextRequest) {
     })
 
     if (!azureRes.ok) {
-      console.error(`Azure Proxy fetch failed: ${azureRes.status} ${azureRes.statusText} for URL: ${cleanUrl}`)
+      console.error(`Azure Proxy fetch failed: ${azureRes.status} ${azureRes.statusText} for URL: ${encodedCleanUrl}`)
       return NextResponse.json(
         { error: `Azure Storage error: ${azureRes.status} ${azureRes.statusText}` },
         { status: azureRes.status }
@@ -51,6 +59,7 @@ export async function GET(request: NextRequest) {
         'Content-Disposition': 'inline',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+        'X-Frame-Options': 'SAMEORIGIN',
         'Cache-Control': 'public, max-age=31536000, immutable'
       }
     })
