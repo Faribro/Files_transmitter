@@ -1,12 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+const NEW_AZURE_SAS_TOKEN = 'si=PrisionSAS&spr=https&sv=2026-02-06&sr=c&sig=mFG8b9Yyzs8r7tgreyYnie25Man3QhNDEhM2dlhlbA8%3D'
+
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
-    const url = searchParams.get('url')
+    let url = searchParams.get('url')
 
     if (!url) {
       return NextResponse.json({ error: 'Missing url parameter' }, { status: 400 })
+    }
+
+    // Automatically append working Azure SAS token if accessing Azure Blob Storage
+    if (url.includes('storageaccountprision.blob.core.windows.net') && !url.includes('sig=')) {
+      const separator = url.includes('?') ? '&' : '?'
+      url = `${url}${separator}${NEW_AZURE_SAS_TOKEN}`
     }
 
     // Fetch binary stream from Azure Blob / Backend
