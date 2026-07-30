@@ -139,7 +139,7 @@ export default function DicomViewer({ fileUrl, filename, onClose, isMaximized, o
     }
   }, [fileUrl])
 
-  // Apply Tuberculosis-Specific Chest X-Ray Presets
+  // Apply Relative Tuberculosis-Specific Chest X-Ray Presets
   const applyPreset = (p: 'native' | 'parenchyme' | 'pleural' | 'mediastinal' | 'bone') => {
     setPreset(p)
     if (status !== 'ready' || !csRef.current || !elemRef.current) return
@@ -149,13 +149,16 @@ export default function DicomViewer({ fileUrl, filename, onClose, isMaximized, o
       const vp = cs.getViewport(el)
       if (!vp) return
 
-      let center = defaultVoiRef.current.windowCenter
-      let width = defaultVoiRef.current.windowWidth
+      const origCenter = defaultVoiRef.current.windowCenter
+      const origWidth = defaultVoiRef.current.windowWidth
 
-      if (p === 'parenchyme') { center = -500; width = 1200 }     // TB Apical Infiltrates / Lesions
-      else if (p === 'pleural') { center = -200; width = 1000 }    // Pleural Effusion & Thickening
-      else if (p === 'mediastinal') { center = 40; width = 400 }   // Hilar Lymphadenopathy
-      else if (p === 'bone') { center = 300; width = 1500 }        // Rib / Bony Structure
+      let center = origCenter
+      let width = origWidth
+
+      if (p === 'parenchyme') { center = origCenter * 0.90; width = origWidth * 0.70 }
+      else if (p === 'pleural') { center = origCenter * 0.82; width = origWidth * 0.85 }
+      else if (p === 'mediastinal') { center = origCenter * 1.05; width = origWidth * 0.60 }
+      else if (p === 'bone') { center = origCenter * 1.15; width = origWidth * 1.10 }
 
       cs.setViewport(el, {
         ...vp,
@@ -173,17 +176,19 @@ export default function DicomViewer({ fileUrl, filename, onClose, isMaximized, o
       const vp = cs.getViewport(el)
       if (!vp) return
 
-      let center = defaultVoiRef.current.windowCenter
-      let width = defaultVoiRef.current.windowWidth
+      const origCenter = defaultVoiRef.current.windowCenter
+      const origWidth = defaultVoiRef.current.windowWidth
 
-      if (preset === 'parenchyme') { center = -500; width = 1200 }
-      else if (preset === 'pleural') { center = -200; width = 1000 }
-      else if (preset === 'mediastinal') { center = 40; width = 400 }
-      else if (preset === 'bone') { center = 300; width = 1500 }
-      else {
-        center = center + (100 - brightness) * (width / 200)
-        width = Math.max(1, width * (contrast / 100))
-      }
+      let center = origCenter
+      let width = origWidth
+
+      if (preset === 'parenchyme') { center = origCenter * 0.90; width = origWidth * 0.70 }
+      else if (preset === 'pleural') { center = origCenter * 0.82; width = origWidth * 0.85 }
+      else if (preset === 'mediastinal') { center = origCenter * 1.05; width = origWidth * 0.60 }
+      else if (preset === 'bone') { center = origCenter * 1.15; width = origWidth * 1.10 }
+
+      center = center + (100 - brightness) * (width / 200)
+      width = Math.max(1, width * (contrast / 100))
 
       cs.setViewport(el, {
         ...vp,
