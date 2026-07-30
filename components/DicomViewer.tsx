@@ -527,11 +527,6 @@ export default function DicomViewer({ fileUrl, filename, onClose, isMaximized, o
         )}
 
         {/* READY BADGE */}
-        {status === 'ready' && (
-          <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-cyan-400 text-[10px] font-extrabold backdrop-blur-md pointer-events-none z-20">
-            Live 16-Bit DICOM PACS
-          </div>
-        )}
       </div>
 
       {/* ── SECURITY & SHARE MODAL ─────────────────────────────────────────── */}

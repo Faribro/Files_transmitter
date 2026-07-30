@@ -125,11 +125,6 @@ export default function PdfReportViewer({ fileUrl, filename, onClose, isMaximize
         )}
 
         {/* Ready badge */}
-        {loaded && !errored && (
-          <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-[10px] font-extrabold backdrop-blur-md pointer-events-none z-20">
-            Live AI Medical PDF
-          </div>
-        )}
       </div>
     </div>
   )
