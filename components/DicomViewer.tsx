@@ -36,8 +36,8 @@ export default function DicomViewer({ fileUrl, filename, onClose, isMaximized, o
   
   // Active tool state: 'pan' | 'distance' | 'angle' | 'hu'
   const [activeTool, setActiveTool] = useState<'pan' | 'distance' | 'angle' | 'hu'>('pan')
-  // Preset state: 'native' | 'lung' | 'bone' | 'brain' | 'abdomen'
-  const [preset, setPreset] = useState<'native' | 'lung' | 'bone' | 'brain' | 'abdomen'>('native')
+  // Preset state: 'native' | 'parenchyme' | 'pleural' | 'mediastinal' | 'bone'
+  const [preset, setPreset] = useState<'native' | 'parenchyme' | 'pleural' | 'mediastinal' | 'bone'>('native')
   // View mode state: '2d' | 'mpr_coronal' | 'mpr_sagittal' | '3d_mip'
   const [viewMode, setViewMode] = useState<'2d' | 'mpr_coronal' | 'mpr_sagittal' | '3d_mip'>('2d')
   
@@ -139,8 +139,8 @@ export default function DicomViewer({ fileUrl, filename, onClose, isMaximized, o
     }
   }, [fileUrl])
 
-  // Apply Anatomical Window Level Presets
-  const applyPreset = (p: 'native' | 'lung' | 'bone' | 'brain' | 'abdomen') => {
+  // Apply Tuberculosis-Specific Chest X-Ray Presets
+  const applyPreset = (p: 'native' | 'parenchyme' | 'pleural' | 'mediastinal' | 'bone') => {
     setPreset(p)
     if (status !== 'ready' || !csRef.current || !elemRef.current) return
     try {
@@ -152,10 +152,10 @@ export default function DicomViewer({ fileUrl, filename, onClose, isMaximized, o
       let center = defaultVoiRef.current.windowCenter
       let width = defaultVoiRef.current.windowWidth
 
-      if (p === 'lung') { center = -600; width = 1500 }
-      else if (p === 'bone') { center = 300; width = 1500 }
-      else if (p === 'brain') { center = 40; width = 400 }
-      else if (p === 'abdomen') { center = 40; width = 350 }
+      if (p === 'parenchyme') { center = -500; width = 1200 }     // TB Apical Infiltrates / Lesions
+      else if (p === 'pleural') { center = -200; width = 1000 }    // Pleural Effusion & Thickening
+      else if (p === 'mediastinal') { center = 40; width = 400 }   // Hilar Lymphadenopathy
+      else if (p === 'bone') { center = 300; width = 1500 }        // Rib / Bony Structure
 
       cs.setViewport(el, {
         ...vp,
@@ -176,10 +176,10 @@ export default function DicomViewer({ fileUrl, filename, onClose, isMaximized, o
       let center = defaultVoiRef.current.windowCenter
       let width = defaultVoiRef.current.windowWidth
 
-      if (preset === 'lung') { center = -600; width = 1500 }
+      if (preset === 'parenchyme') { center = -500; width = 1200 }
+      else if (preset === 'pleural') { center = -200; width = 1000 }
+      else if (preset === 'mediastinal') { center = 40; width = 400 }
       else if (preset === 'bone') { center = 300; width = 1500 }
-      else if (preset === 'brain') { center = 40; width = 400 }
-      else if (preset === 'abdomen') { center = 40; width = 350 }
       else {
         center = center + (100 - brightness) * (width / 200)
         width = Math.max(1, width * (contrast / 100))
@@ -389,29 +389,33 @@ export default function DicomViewer({ fileUrl, filename, onClose, isMaximized, o
           </div>
         </div>
 
-        {/* ROW 2: ANATOMICAL WINDOW LEVEL PRESETS & BRIGHTNESS/CONTRAST */}
+        {/* ROW 2: TUBERCULOSIS CHEST X-RAY WINDOW LEVEL PRESETS */}
         <div className="flex items-center justify-between gap-3 pt-2 border-t border-slate-800/80 flex-wrap">
           
-          {/* ANATOMICAL PRESETS */}
+          {/* TUBERCULOSIS / CHEST X-RAY PRESETS */}
           <div className="flex items-center gap-1.5">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Presets:</span>
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">TB Presets:</span>
             {[
-              { id: 'native', label: 'Native VOI' },
-              { id: 'lung', label: '🫁 Lung' },
-              { id: 'bone', label: '🦴 Bone' },
-              { id: 'brain', label: '🧠 Soft Tissue' },
-              { id: 'abdomen', label: '🩺 Abdomen' },
-            ].map(p => (
-              <button
-                key={p.id}
-                onClick={() => applyPreset(p.id as any)}
-                className={`px-2.5 py-1 rounded-lg text-[10px] font-black transition-all ${
-                  preset === p.id ? 'bg-cyan-600 text-white shadow-sm' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200'
-                }`}
-              >
-                {p.label}
-              </button>
-            ))}
+              { id: 'native', label: 'Native VOI', icon: Eye },
+              { id: 'parenchyme', label: 'TB Infiltrates', icon: Activity },
+              { id: 'pleural', label: 'Pleural Effusion', icon: Compass },
+              { id: 'mediastinal', label: 'Hilar Nodes', icon: Layers },
+              { id: 'bone', label: 'Rib Structure', icon: Box },
+            ].map(p => {
+              const IconComp = p.icon
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => applyPreset(p.id as any)}
+                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-[10px] font-black transition-all ${
+                    preset === p.id ? 'bg-cyan-600 text-white shadow-sm ring-1 ring-cyan-400' : 'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200'
+                  }`}
+                >
+                  <IconComp className="w-3 h-3 text-cyan-400" />
+                  {p.label}
+                </button>
+              )
+            })}
           </div>
 
           {/* SLIDERS & RESET */}

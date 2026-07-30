@@ -544,8 +544,8 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
                     : 'bg-red-50 text-red-700 hover:bg-red-100 border border-red-200'
                 }`}
               >
-                <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-                🔴 Suspected ({fmtNum(suspectedCount)})
+                <ShieldAlert className="w-4 h-4 text-red-500 animate-pulse" />
+                Suspected ({fmtNum(suspectedCount)})
               </button>
 
               <button
@@ -556,8 +556,8 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
                     : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
                 }`}
               >
-                <span className="w-2 h-2 rounded-full bg-white" />
-                🟢 Not Suspected ({fmtNum(notSuspectedCount)})
+                <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                Not Suspected ({fmtNum(notSuspectedCount)})
               </button>
             </div>
 
@@ -640,7 +640,7 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
               <div
                 onMouseEnter={() => setHoveredViewer('dcm')}
                 onMouseLeave={() => setHoveredViewer(null)}
-                className={`bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xl flex flex-col gap-4 transition-all duration-500 ease-in-out ${
+                className={`bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xl flex flex-col justify-between gap-4 transition-all duration-500 ease-in-out h-full ${
                   maximizedViewer === 'dcm'
                     ? 'w-full ring-4 ring-cyan-500'
                     : hoveredViewer === 'dcm'
@@ -672,7 +672,7 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
                   onToggleMaximize={() => setMaximizedViewer(maximizedViewer === 'dcm' ? null : 'dcm')}
                 />
 
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs flex justify-between items-center">
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs flex justify-between items-center mt-auto">
                   <span className="text-slate-500 font-bold">Filename:</span>
                   <span className="font-black text-slate-800 truncate max-w-[280px]">{selectedPatient.dcm_name}</span>
                 </div>
@@ -682,7 +682,7 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
               <div
                 onMouseEnter={() => setHoveredViewer('pdf')}
                 onMouseLeave={() => setHoveredViewer(null)}
-                className={`bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xl flex flex-col gap-4 transition-all duration-500 ease-in-out ${
+                className={`bg-white rounded-3xl p-5 border border-slate-200/80 shadow-xl flex flex-col justify-between gap-4 transition-all duration-500 ease-in-out h-full ${
                   maximizedViewer === 'pdf'
                     ? 'w-full ring-4 ring-indigo-500'
                     : hoveredViewer === 'pdf'
@@ -699,17 +699,24 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
                     </div>
                     <div>
                       <h4 className="text-sm font-black text-slate-900">Diagnostic Report (.pdf)</h4>
-                      <p className="text-[10px] font-bold text-slate-400">AI Medical Report</p>
+                      <p className="text-[10px] font-bold text-slate-400">AI Medical Report · Hover to Expand</p>
                     </div>
                   </div>
                   <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[10px] font-black border border-emerald-200">
                     <CheckCircle className="w-3 h-3 inline mr-1" /> Available
                   </span>
                 </div>
-                <PdfReportViewer fileUrl={selectedPatient.pdf_url} filename={selectedPatient.pdf_name} />
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs flex justify-between">
+
+                <PdfReportViewer
+                  fileUrl={selectedPatient.pdf_url}
+                  filename={selectedPatient.pdf_name}
+                  isMaximized={maximizedViewer === 'pdf'}
+                  onToggleMaximize={() => setMaximizedViewer(maximizedViewer === 'pdf' ? null : 'pdf')}
+                />
+
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-100 text-xs flex justify-between items-center mt-auto">
                   <span className="text-slate-500 font-bold">Filename:</span>
-                  <span className="font-black text-slate-800 truncate">{selectedPatient.pdf_name}</span>
+                  <span className="font-black text-slate-800 truncate max-w-[280px]">{selectedPatient.pdf_name}</span>
                 </div>
               </div>
             </div>
