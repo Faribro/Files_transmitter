@@ -26,6 +26,8 @@ export default function DicomViewer({ fileUrl, filename, onClose }: DicomViewerP
   const [inverted, setInverted]     = useState(false)
   const csRef   = useRef<any>(null)
   const cswRef  = useRef<any>(null)
+  // Store native VOI from DICOM header
+  const defaultVoiRef = useRef<{ windowCenter: number; windowWidth: number }>({ windowCenter: 128, windowWidth: 256 })
 
   useEffect(() => {
     if (!fileUrl) {
@@ -72,14 +74,24 @@ export default function DicomViewer({ fileUrl, filename, onClose }: DicomViewerP
         cornerstone.displayImage(el, image)
         setStatus('ready')
 
-        // Apply initial viewport
+        // Apply initial viewport and save header VOI
         const vp = cornerstone.getDefaultViewportForImage(el, image)
+        if (vp && vp.voi) {
+          defaultVoiRef.current = {
+            windowCenter: typeof vp.voi.windowCenter === 'number' ? vp.voi.windowCenter : (image.windowCenter || 128),
+            windowWidth: typeof vp.voi.windowWidth === 'number' ? vp.voi.windowWidth : (image.windowWidth || 256),
+          }
+        }
         cornerstone.setViewport(el, vp)
 
       } catch (err: any) {
         if (!active) return
         console.error('DICOM load error:', err)
-        setError(err?.message || 'Failed to load DICOM')
+        if (err?.name === 'ChunkLoadError' || String(err?.message || '').includes('Loading chunk')) {
+          window.location.reload()
+          return
+        }
+        setError(err?.message || 'Failed to load DICOM image')
         setStatus('error')
       }
     }
@@ -96,7 +108,7 @@ export default function DicomViewer({ fileUrl, filename, onClose }: DicomViewerP
     }
   }, [fileUrl])
 
-  // Apply viewport adjustments live
+  // Apply viewport adjustments live preserving native VOI
   useEffect(() => {
     if (status !== 'ready' || !csRef.current || !elemRef.current) return
     try {
@@ -104,12 +116,19 @@ export default function DicomViewer({ fileUrl, filename, onClose }: DicomViewerP
       const el = elemRef.current
       const vp = cs.getViewport(el)
       if (!vp) return
+      
+      const origCenter = defaultVoiRef.current.windowCenter
+      const origWidth = defaultVoiRef.current.windowWidth
+
+      const adjustedCenter = origCenter + (100 - brightness) * (origWidth / 200)
+      const adjustedWidth = Math.max(1, origWidth * (contrast / 100))
+
       cs.setViewport(el, {
         ...vp,
         scale: zoom,
         rotation,
         invert: inverted,
-        voi: { windowWidth: contrast * 4, windowCenter: brightness - 50 },
+        voi: { windowWidth: adjustedWidth, windowCenter: adjustedCenter },
       })
     } catch {}
   }, [zoom, rotation, inverted, brightness, contrast, status])
