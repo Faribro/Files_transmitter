@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { FolderTree, Menu, X, ChevronLeft } from 'lucide-react'
+import { FolderTree, Menu, X, ChevronLeft, Zap } from 'lucide-react'
 import AllianceIndiaLogo from './AllianceIndiaLogo'
 
 // Icon components for 'A' (Akross) and 'D' (Davo)
@@ -26,6 +26,7 @@ function DavoIcon({ className = '' }: { className?: string }) {
 const navigation = [
   { name: 'Akross', href: '/akross', customIcon: AkrossIcon, badge: 'Facility' },
   { name: 'Davo', href: '/davo', customIcon: DavoIcon, badge: 'Facility' },
+  { name: 'Migration Monitor', href: '/migration', icon: Zap, badge: 'Realtime' },
   { name: 'Storage Hierarchy', href: '/storage-hierarchy', icon: FolderTree, badge: 'Azure View' },
 ]
 
