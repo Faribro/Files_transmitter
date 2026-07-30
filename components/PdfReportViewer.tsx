@@ -1,12 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { ZoomIn, ZoomOut, RotateCw, RefreshCw, ExternalLink, Download, AlertTriangle } from 'lucide-react'
+import { ZoomIn, ZoomOut, RotateCw, RefreshCw, ExternalLink, Download, AlertTriangle, Maximize2, Minimize2 } from 'lucide-react'
 
 interface PdfReportViewerProps {
   fileUrl: string
   filename: string
   onClose?: () => void
+  isMaximized?: boolean
+  onToggleMaximize?: () => void
 }
 
 function proxyUrl(raw: string) {
@@ -14,18 +16,18 @@ function proxyUrl(raw: string) {
   return `/api/v1/proxy?url=${encodeURIComponent(raw)}`
 }
 
-export default function PdfReportViewer({ fileUrl, filename, onClose }: PdfReportViewerProps) {
-  const [zoom, setZoom]         = useState(100)
+export default function PdfReportViewer({ fileUrl, filename, onClose, isMaximized, onToggleMaximize }: PdfReportViewerProps) {
+  const [zoom, setZoom] = useState(100)
   const [rotation, setRotation] = useState(0)
-  const [loaded, setLoaded]     = useState(false)
-  const [errored, setErrored]   = useState(false)
+  const [loaded, setLoaded] = useState(false)
+  const [errored, setErrored] = useState(false)
 
   const proxied = proxyUrl(fileUrl)
 
   return (
-    <div className="flex flex-col rounded-2xl bg-slate-900 border border-slate-800 overflow-hidden shadow-2xl">
+    <div className={`flex flex-col rounded-3xl bg-slate-900 border border-slate-800 overflow-hidden shadow-2xl transition-all duration-300 ${isMaximized ? 'fixed inset-4 z-50 rounded-3xl' : 'relative'}`}>
       {/* TOOLBAR */}
-      <div className="flex items-center justify-between px-4 py-2.5 bg-slate-950 border-b border-slate-800 text-xs font-bold text-slate-300 gap-2 flex-wrap">
+      <div className="flex items-center justify-between px-4 py-3 bg-slate-950 border-b border-slate-800 text-xs font-bold text-slate-300 gap-2 flex-wrap">
         <div className="flex items-center gap-1.5">
           <button onClick={() => setZoom(z => Math.min(z + 20, 250))}
             className="p-1.5 rounded-lg bg-slate-800 hover:bg-indigo-600 hover:text-white transition-colors" title="Zoom In">
@@ -39,10 +41,11 @@ export default function PdfReportViewer({ fileUrl, filename, onClose }: PdfRepor
             className="p-1.5 rounded-lg bg-slate-800 hover:bg-indigo-600 hover:text-white transition-colors" title="Rotate">
             <RotateCw className="w-4 h-4" />
           </button>
-          <span className="text-[11px] font-extrabold text-indigo-400 px-2 py-0.5 rounded-md bg-indigo-500/10 border border-indigo-500/20">
+          <span className="text-[11px] font-extrabold text-indigo-400 px-2.5 py-0.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20">
             {zoom}%
           </span>
         </div>
+        
         <div className="flex items-center gap-2">
           <a href={fileUrl} target="_blank" rel="noopener noreferrer"
             className="p-1.5 rounded-lg bg-slate-800 hover:bg-indigo-600 hover:text-white transition-colors" title="Open in new tab">
@@ -56,19 +59,24 @@ export default function PdfReportViewer({ fileUrl, filename, onClose }: PdfRepor
             className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-bold transition-colors">
             Reset Zoom
           </button>
+          {onToggleMaximize && (
+            <button onClick={onToggleMaximize} className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors" title={isMaximized ? "Minimize" : "Maximize"}>
+              {isMaximized ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            </button>
+          )}
         </div>
       </div>
 
       {/* PDF VIEWPORT */}
       <div
         className="relative bg-slate-950 overflow-auto"
-        style={{ height: '360px' }}
+        style={{ height: isMaximized ? 'calc(100vh - 120px)' : '480px' }}
       >
         {/* Loading skeleton */}
         {!loaded && !errored && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-slate-950 z-10">
             <RefreshCw className="w-7 h-7 text-indigo-500 animate-spin" />
-            <p className="text-xs font-bold text-slate-400">Loading PDF from Azure…</p>
+            <p className="text-xs font-bold text-slate-400">Loading AI Diagnostic Report…</p>
             <p className="text-[10px] text-slate-600 max-w-[220px] text-center truncate">{filename}</p>
           </div>
         )}
@@ -94,7 +102,7 @@ export default function PdfReportViewer({ fileUrl, filename, onClose }: PdfRepor
           </div>
         )}
 
-        {/* Real PDF iframe — zoomed via CSS transform on a wrapper */}
+        {/* Real PDF iframe */}
         {!errored && (
           <div
             className="origin-top-left transition-transform duration-200"
@@ -108,7 +116,7 @@ export default function PdfReportViewer({ fileUrl, filename, onClose }: PdfRepor
               key={proxied}
               src={`${proxied}#toolbar=1&navpanes=0&scrollbar=1`}
               className="w-full h-full border-0"
-              style={{ minHeight: `${360 * 100 / zoom}px` }}
+              style={{ minHeight: `${480 * 100 / zoom}px` }}
               onLoad={() => setLoaded(true)}
               onError={() => { setLoaded(true); setErrored(true) }}
               title={filename}
@@ -118,8 +126,8 @@ export default function PdfReportViewer({ fileUrl, filename, onClose }: PdfRepor
 
         {/* Ready badge */}
         {loaded && !errored && (
-          <div className="absolute top-3 right-3 px-2.5 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-[10px] font-bold backdrop-blur-md pointer-events-none z-20">
-            Live PDF
+          <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-[10px] font-extrabold backdrop-blur-md pointer-events-none z-20">
+            Live AI Medical PDF
           </div>
         )}
       </div>
