@@ -188,21 +188,31 @@ export default function DicomViewer({ fileUrl, filename, onClose }: DicomViewerP
           </div>
         )}
 
-        {/* Error state */}
+        {/* Error / Pending State */}
         {status === 'error' && (
           <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950 gap-3 p-6 text-center">
             <AlertTriangle className="w-10 h-10 text-amber-500" />
-            <p className="text-sm font-black text-slate-200">DICOM Load Failed</p>
-            <p className="text-[10px] text-slate-500 max-w-xs">{error}</p>
-            <a href={fileUrl} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition-colors mt-2">
-              <Download className="w-4 h-4" />
-              Download .dcm File
-            </a>
-            <a href={fileUrl} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-cyan-400 transition-colors">
-              <ExternalLink className="w-3 h-3" /> View in Azure Storage
-            </a>
+            <p className="text-sm font-black text-slate-200">
+              {!fileUrl ? 'DICOM Scan Stored in Archive' : 'DICOM Load Failed'}
+            </p>
+            <p className="text-[11px] text-slate-400 max-w-xs leading-relaxed">
+              {!fileUrl
+                ? 'The AI Diagnostic Report (.pdf) is available on the right. The raw .dcm DICOM image scan is stored inside the Azure ZIP archive for this batch date.'
+                : error}
+            </p>
+            {fileUrl && (
+              <>
+                <a href={fileUrl} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold transition-colors mt-2">
+                  <Download className="w-4 h-4" />
+                  Download .dcm File
+                </a>
+                <a href={fileUrl} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-cyan-400 transition-colors">
+                  <ExternalLink className="w-3 h-3" /> View in Azure Storage
+                </a>
+              </>
+            )}
           </div>
         )}
 

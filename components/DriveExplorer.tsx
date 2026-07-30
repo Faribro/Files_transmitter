@@ -645,10 +645,8 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
                           </span>
                         </div>
                         <div className="flex items-center gap-1.5 mt-2">
-                          <span className={`px-2 py-0.5 rounded-full text-[9px] font-black tracking-wide uppercase ${
-                            isSuspect ? 'bg-white/20 text-white border border-white/30' : 'bg-white/20 text-white border border-white/30'
-                          }`}>
-                            {isSuspect ? '🔴 Suspected' : '🟢 Normal'}
+                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wide bg-white/20 text-white border border-white/30">
+                            DCM: {p.dcm_url ? (p.dcm_count || 1) : 0} · PDF: {p.pdf_url ? (p.pdf_count || 1) : 0}
                           </span>
                         </div>
                       </motion.button>
