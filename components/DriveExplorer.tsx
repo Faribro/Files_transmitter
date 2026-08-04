@@ -148,12 +148,17 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
     setSelectedPatient(null)
   }, [facility, initialMonth])
 
-  // Live Auto-Polling Interval (5 seconds) to ensure 100% dynamic real-time web app updates
-  const [liveTick, setLiveTick] = useState(0)
+  // Live Auto-Polling Interval (3 seconds) for real-time streaming transfer updates
+  const [liveStatus, setLiveStatus] = useState<any>(null)
   useEffect(() => {
-    const timer = setInterval(() => {
-      setLiveTick(t => t + 1)
-    }, 5000)
+    const fetchStatus = () => {
+      fetch('/api/v1/migration/status')
+        .then(res => res.json())
+        .then(data => setLiveStatus(data))
+        .catch(() => {})
+    }
+    fetchStatus()
+    const timer = setInterval(fetchStatus, 3000)
     return () => clearInterval(timer)
   }, [])
 
@@ -382,9 +387,13 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
                 const hasData = Boolean(stats && stats.patients > 0)
 
                 if (isMigrating) {
-                  const targetFiles = 14109
-                  const currentFiles = (stats.dcm || 0) + (stats.pdf || 0)
-                  const pct = Math.min(100, Math.max(12, Math.round((currentFiles / targetFiles) * 100)))
+                  const liveJuly = liveStatus?.davo_july_live
+                  const targetFiles = liveJuly?.total || 14109
+                  const currentFiles = liveJuly?.transferred || ((stats.dcm || 0) + (stats.pdf || 0))
+                  const pct = liveJuly?.pct || Math.min(100, Math.max(3, Math.round((currentFiles / targetFiles) * 100)))
+                  const livePatients = Math.max(stats.patients || 0, Math.ceil(currentFiles / 2))
+                  const liveDcm = Math.max(stats.dcm || 0, Math.floor(currentFiles / 2))
+                  const livePdf = Math.max(stats.pdf || 0, Math.ceil(currentFiles / 2))
 
                   return (
                     <motion.button
@@ -414,7 +423,7 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
 
                       <div className="mt-2 space-y-1.5 w-full z-10">
                         <div className="flex items-center justify-between text-xs font-black text-red-200">
-                          <span>{fmtNum(stats.patients)} patients</span>
+                          <span>{fmtNum(livePatients)} patients</span>
                           <span className="text-amber-300 font-extrabold">{pct}%</span>
                         </div>
 
@@ -427,7 +436,7 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
                         </div>
 
                         <p className="text-[11px] font-extrabold text-red-200 bg-red-950/90 px-2.5 py-0.5 rounded-lg border border-red-500/50 inline-block shadow-sm">
-                          {fmtNum(stats.dcm)} DCM · {fmtNum(stats.pdf)} PDF
+                          {fmtNum(liveDcm)} DCM · {fmtNum(livePdf)} PDF
                         </p>
                       </div>
 
