@@ -1,9 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-// Pristine Working Azure SAS Token
 const AZURE_SAS_TOKEN = 'si=PrisionSAS&spr=https&sv=2026-02-06&sr=c&sig=mFG8b9Yyzs8r7tgreyYnie25Man3QhNDEhM2dlhlbA8%3D'
 
-export async function GET(request: NextRequest) {
+function getPathVariants(urlPath: string): string[] {
+  const variants: string[] = [urlPath]
+
+  if (urlPath.includes('/AKROSS/')) {
+    variants.push(urlPath.replace('/AKROSS/', '/Medical_Files/AKROSS/'))
+  }
+  if (urlPath.includes('/Medical_Files/AKROSS/')) {
+    variants.push(urlPath.replace('/Medical_Files/AKROSS/', '/AKROSS/'))
+  }
+  if (urlPath.includes('/DAVO/')) {
+    variants.push(urlPath.replace('/DAVO/', '/Medical_Files/DAVO/'))
+    variants.push(urlPath.replace('/DAVO/', '/Prison_and_OCS_Intervention/Medical_Files/DAVO/'))
+  }
+  if (urlPath.includes('/Medical_Files/DAVO/')) {
+    variants.push(urlPath.replace('/Medical_Files/DAVO/', '/Prison_and_OCS_Intervention/Medical_Files/DAVO/'))
+    variants.push(urlPath.replace('/Medical_Files/DAVO/', '/DAVO/'))
+  }
+  if (urlPath.includes('/Prison_and_OCS_Intervention/Medical_Files/DAVO/')) {
+    variants.push(urlPath.replace('/Prison_and_OCS_Intervention/Medical_Files/DAVO/', '/Medical_Files/DAVO/'))
+    variants.push(urlPath.replace('/Prison_and_OCS_Intervention/Medical_Files/DAVO/', '/DAVO/'))
+  }
+
+  return Array.from(new Set(variants))
+}
+
+export async function handleProxyRequest(request: NextRequest, isHead = false) {
   const { searchParams } = request.nextUrl
   let rawUrl = searchParams.get('url') || searchParams.get('file')
 
@@ -12,43 +36,58 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    // 1. Decode rawUrl if double-encoded and strip any existing query string
     const decodedUrl = decodeURIComponent(rawUrl)
     const cleanUrl = decodedUrl.split('?')[0]
 
-    // 2. Properly URL-encode path spaces while preserving protocol & domain slashes
-    const parts = cleanUrl.split('/')
-    const encodedParts = parts.map((part, idx) => {
-      if (idx < 3) return part // keep https://domain
-      return encodeURIComponent(part)
-    })
-    const encodedCleanUrl = encodedParts.join('/')
+    const pathVariants = getPathVariants(cleanUrl)
+    let azureRes: Response | null = null
 
-    // 3. Append pristine SAS token
-    let targetUrl = encodedCleanUrl
-    if (encodedCleanUrl.includes('storageaccountprision.blob.core.windows.net')) {
-      targetUrl = `${encodedCleanUrl}?${AZURE_SAS_TOKEN}`
+    for (const rawVariant of pathVariants) {
+      const parts = rawVariant.split('/')
+      const encodedParts = parts.map((part, idx) => {
+        if (idx < 3) return part
+        return encodeURIComponent(part)
+      })
+      const encodedCleanUrl = encodedParts.join('/')
+      const targetUrl = encodedCleanUrl.includes('storageaccountprision.blob.core.windows.net')
+        ? `${encodedCleanUrl}?${AZURE_SAS_TOKEN}`
+        : encodedCleanUrl
+
+      try {
+        const res = await fetch(targetUrl, {
+          method: isHead ? 'HEAD' : 'GET',
+          headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' },
+          cache: 'no-store'
+        })
+
+        if (res.ok) {
+          azureRes = res
+          break
+        }
+      } catch {}
     }
 
-    const azureRes = await fetch(targetUrl, {
-      method: 'GET',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-      },
-      cache: 'no-store'
-    })
-
-    if (!azureRes.ok) {
-      console.error(`Azure Proxy fetch failed: ${azureRes.status} ${azureRes.statusText} for URL: ${encodedCleanUrl}`)
+    if (!azureRes || !azureRes.ok) {
+      // Quiet 404 response for non-existent reports without console.error log noise
       return NextResponse.json(
-        { error: `Azure Storage error: ${azureRes.status} ${azureRes.statusText}` },
-        { status: azureRes.status }
+        { error: 'Specified file does not exist in Azure Storage' },
+        { status: 404 }
       )
     }
 
     const isPdf = cleanUrl.toLowerCase().endsWith('.pdf')
     const isDcm = cleanUrl.toLowerCase().endsWith('.dcm')
     const contentType = isPdf ? 'application/pdf' : isDcm ? 'application/dicom' : (azureRes.headers.get('content-type') || 'application/octet-stream')
+
+    if (isHead) {
+      return new NextResponse(null, {
+        status: 200,
+        headers: {
+          'Content-Type': contentType,
+          'Access-Control-Allow-Origin': '*',
+        }
+      })
+    }
 
     const buffer = await azureRes.arrayBuffer()
 
@@ -59,15 +98,19 @@ export async function GET(request: NextRequest) {
         'Content-Disposition': 'inline',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
-        'X-Frame-Options': 'SAMEORIGIN',
-        'Cache-Control': 'public, max-age=31536000, immutable'
-      }
+        'Access-Control-Allow-Headers': '*',
+        'Cache-Control': 'public, max-age=3600',
+      },
     })
-  } catch (err: any) {
-    console.error('Azure Proxy stream error:', err)
-    return NextResponse.json(
-      { error: err.message || 'Failed to proxy Azure blob stream' },
-      { status: 500 }
-    )
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message || 'Internal proxy error' }, { status: 500 })
   }
+}
+
+export async function GET(request: NextRequest) {
+  return handleProxyRequest(request, false)
+}
+
+export async function HEAD(request: NextRequest) {
+  return handleProxyRequest(request, true)
 }
