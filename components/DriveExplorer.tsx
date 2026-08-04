@@ -387,8 +387,8 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
                 const hasData = Boolean(stats && stats.patients > 0)
 
                 if (isMigrating) {
-                  const liveData = (facility === 'DAVO' && mf.key === '2026-07') ? liveStatus?.davo_july_live : liveStatus?.akross_live?.[mf.key]
-                  const targetFiles = liveData?.total || (facility === 'DAVO' ? 14109 : 7500)
+                  const liveData = ((facility as string) === 'DAVO' && mf.key === '2026-07') ? liveStatus?.davo_july_live : liveStatus?.akross_live?.[mf.key]
+                  const targetFiles = liveData?.total || ((facility as string) === 'DAVO' ? 14109 : 7500)
                   const currentFiles = liveData?.transferred || ((stats.dcm || 0) + (stats.pdf || 0))
                   const pct = liveData?.pct || Math.min(100, Math.round((currentFiles / targetFiles) * 100))
                   const livePatients = Math.max(stats.patients || 0, Math.ceil(currentFiles / 2))
