@@ -14,7 +14,7 @@ const REAL_SUMMARY_DATA: Record<string, any[]> = {
     { facility: 'DAVO', month: '2026-04', status: 'completed', file_count: 13464, size_bytes: 103800000000, patient_count: 10951, dcm_count: 6655, pdf_count: 6809 },
     { facility: 'DAVO', month: '2026-05', status: 'completed', file_count: 18642, size_bytes: 142100000000, patient_count: 15257, dcm_count: 9102, pdf_count: 9540 },
     { facility: 'DAVO', month: '2026-06', status: 'completed', file_count: 18893, size_bytes: 145500000000, patient_count: 18893, dcm_count: 9319, pdf_count: 9574 },
-    { facility: 'DAVO', month: '2026-07', status: 'completed', file_count: 349, size_bytes: 2850000000, patient_count: 349, dcm_count: 184, pdf_count: 165 }
+    { facility: 'DAVO', month: '2026-07', status: 'completed', file_count: 14109, size_bytes: 108500000000, patient_count: 6999, dcm_count: 7110, pdf_count: 6999 }
   ]
 }
 
