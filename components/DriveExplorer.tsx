@@ -382,6 +382,7 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {months.map((mf, i) => {
+                const stats = getDynamicMonthStats(facility, mf.key)
                 const akrossLiveData = (facility === 'AKROSS' && mf.key === '2026-03') ? liveStatus?.akross_live?.[mf.key] : null
                 const isMigrating = akrossLiveData ? !akrossLiveData.is_complete : false
                 const hasData = Boolean(stats && stats.patients > 0)
