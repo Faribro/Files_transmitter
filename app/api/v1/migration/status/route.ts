@@ -5,10 +5,10 @@ export const revalidate = 0
 
 export async function GET() {
   let baseUploaded = 4814
-  let sessionUploaded = 2096
+  let sessionUploaded = 5401
   const davoJulyTarget = 14109
 
-  // Read latest session upload count from fast_davo_july_stream.log
+  // Read latest session upload count directly from log file
   try {
     const logPath = '/home/azureuser/medical-migration/fast_davo_july_stream.log'
     if (fs.existsSync(logPath)) {
@@ -24,7 +24,7 @@ export async function GET() {
     }
   } catch {}
 
-  const totalDavoJuly = baseUploaded + sessionUploaded
+  const totalDavoJuly = Math.min(davoJulyTarget, baseUploaded + sessionUploaded)
   const davo_july_pct = Math.min(100, Math.round((totalDavoJuly / davoJulyTarget) * 100))
 
   const akrossLive: Record<string, { transferred: number; total: number; pct: number }> = {
