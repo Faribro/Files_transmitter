@@ -383,14 +383,14 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {months.map((mf, i) => {
                 const stats = getDynamicMonthStats(facility, mf.key)
-                const isMigrating = (facility === 'DAVO' && mf.key === '2026-07')
+                const isMigrating = (facility === 'DAVO' && mf.key === '2026-07') || (facility === 'AKROSS' && ['2026-03', '2026-04', '2026-05', '2026-06'].includes(mf.key))
                 const hasData = Boolean(stats && stats.patients > 0)
 
                 if (isMigrating) {
-                  const liveJuly = liveStatus?.davo_july_live
-                  const targetFiles = liveJuly?.total || 14109
-                  const currentFiles = liveJuly?.transferred || ((stats.dcm || 0) + (stats.pdf || 0))
-                  const pct = liveJuly?.pct || Math.min(100, Math.max(3, Math.round((currentFiles / targetFiles) * 100)))
+                  const liveData = (facility === 'DAVO' && mf.key === '2026-07') ? liveStatus?.davo_july_live : liveStatus?.akross_live?.[mf.key]
+                  const targetFiles = liveData?.total || 7500
+                  const currentFiles = liveData?.transferred || ((stats.dcm || 0) + (stats.pdf || 0))
+                  const pct = liveData?.pct || Math.min(100, Math.max(8, Math.round((currentFiles / targetFiles) * 100)))
                   const livePatients = Math.max(stats.patients || 0, Math.ceil(currentFiles / 2))
                   const liveDcm = Math.max(stats.dcm || 0, Math.floor(currentFiles / 2))
                   const livePdf = Math.max(stats.pdf || 0, Math.ceil(currentFiles / 2))
