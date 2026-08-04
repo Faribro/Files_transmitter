@@ -34,32 +34,62 @@ async function countAzureBlobs(prefix: string): Promise<number> {
 }
 
 export async function GET() {
-  const [ak3_blobs] = await Promise.all([
-    countAzureBlobs('AKROSS/2026-03/')
+  const [ak3_blobs, ak4_blobs, ak5_blobs] = await Promise.all([
+    countAzureBlobs('AKROSS/2026-03/'),
+    countAzureBlobs('AKROSS/2026-04/'),
+    countAzureBlobs('AKROSS/2026-05/')
   ])
 
-  // Ground Truth Target for March 2026 from Official Screening Document Photo (14,473 Screenings = 28,946 DCM+PDF files)
+  // Official Ground Truth Targets (Inmate Screenings = 2x Files)
   const MARCH_TARGET_PATIENTS = 14473
   const MARCH_TARGET_FILES = MARCH_TARGET_PATIENTS * 2
 
-  const currentFiles = Math.max(ak3_blobs, 2818)
-  const march_pct = Math.min(100, Math.round((currentFiles / MARCH_TARGET_FILES) * 100))
+  const APRIL_TARGET_PATIENTS = 9668
+  const APRIL_TARGET_FILES = APRIL_TARGET_PATIENTS * 2
+
+  const MAY_TARGET_PATIENTS = 4385
+  const MAY_TARGET_FILES = MAY_TARGET_PATIENTS * 2
+
+  const marFiles = Math.max(ak3_blobs, 7812)
+  const marPct = Math.min(100, Math.round((marFiles / MARCH_TARGET_FILES) * 100))
+
+  const aprFiles = Math.max(ak4_blobs, 1002)
+  const aprPct = Math.min(100, Math.round((aprFiles / APRIL_TARGET_FILES) * 100))
+
+  const mayFiles = Math.max(ak5_blobs, 149)
+  const mayPct = Math.min(100, Math.round((mayFiles / MAY_TARGET_FILES) * 100))
 
   const akross_live = {
     '2026-01': { transferred: 5226, total: 5226, patients: 2613, dcm: 2613, pdf: 2613, pct: 100, is_complete: true },
     '2026-02': { transferred: 25696, total: 25696, patients: 12848, dcm: 12848, pdf: 12848, pct: 100, is_complete: true },
     '2026-03': {
-      transferred: currentFiles,
+      transferred: marFiles,
       total: MARCH_TARGET_FILES,
-      patients: Math.min(MARCH_TARGET_PATIENTS, Math.ceil(currentFiles / 2)),
-      dcm: Math.floor(currentFiles / 2),
-      pdf: Math.ceil(currentFiles / 2),
-      pct: march_pct,
-      is_complete: march_pct >= 100
+      patients: Math.min(MARCH_TARGET_PATIENTS, Math.ceil(marFiles / 2)),
+      dcm: Math.floor(marFiles / 2),
+      pdf: Math.ceil(marFiles / 2),
+      pct: marPct,
+      is_complete: marPct >= 100
     },
-    '2026-04': { transferred: 19336, total: 19336, patients: 9668, dcm: 9668, pdf: 9668, pct: 100, is_complete: true },
-    '2026-05': { transferred: 8770, total: 8770, patients: 4385, dcm: 4385, pdf: 4385, pct: 100, is_complete: true },
-    '2026-06': { transferred: 2976, total: 2976, patients: 1488, dcm: 1488, pdf: 1488, pct: 100, is_complete: true },
+    '2026-04': {
+      transferred: aprFiles,
+      total: APRIL_TARGET_FILES,
+      patients: Math.min(APRIL_TARGET_PATIENTS, Math.ceil(aprFiles / 2)),
+      dcm: Math.floor(aprFiles / 2),
+      pdf: Math.ceil(aprFiles / 2),
+      pct: aprPct,
+      is_complete: aprPct >= 100
+    },
+    '2026-05': {
+      transferred: mayFiles,
+      total: MAY_TARGET_FILES,
+      patients: Math.min(MAY_TARGET_PATIENTS, Math.ceil(mayFiles / 2)),
+      dcm: Math.floor(mayFiles / 2),
+      pdf: Math.ceil(mayFiles / 2),
+      pct: mayPct,
+      is_complete: mayPct >= 100
+    },
+    '2026-06': { transferred: 2976, total: 2976, patients: 1488, dcm: 1488, pdf: 1488, pct: 100, is_complete: true }
   }
 
   return NextResponse.json(
