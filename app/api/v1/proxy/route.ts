@@ -27,7 +27,7 @@ function getPathVariants(urlPath: string): string[] {
   return Array.from(new Set(variants))
 }
 
-export async function handleProxyRequest(request: NextRequest, isHead = false) {
+async function handleProxyRequest(request: NextRequest, isHead = false) {
   const { searchParams } = request.nextUrl
   let rawUrl = searchParams.get('url') || searchParams.get('file')
 
