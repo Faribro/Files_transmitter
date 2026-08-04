@@ -152,7 +152,7 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
   const [liveStatus, setLiveStatus] = useState<any>(null)
   useEffect(() => {
     const fetchStatus = () => {
-      fetch('/api/v1/migration/status')
+      fetch('/api/v1/migration/status', { cache: 'no-store' })
         .then(res => res.json())
         .then(data => setLiveStatus(data))
         .catch(() => {})
