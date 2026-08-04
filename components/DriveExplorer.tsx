@@ -413,7 +413,7 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
                           <RefreshCw className="w-5 h-5 animate-spin" />
                         </div>
                         <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-md flex items-center gap-1.5 animate-pulse border border-red-400/40">
-                          <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" /> ⚡ Live Migrating
+                          <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" /> ⚡ {fmtNum(currentFiles)} / {fmtNum(targetFiles)}
                         </span>
                       </div>
 
