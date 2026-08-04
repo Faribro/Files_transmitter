@@ -34,8 +34,7 @@ async function countAzureBlobs(prefix: string): Promise<number> {
 }
 
 export async function GET() {
-  const [ak4_blobs, ak5_blobs, ak6_blobs] = await Promise.all([
-    countAzureBlobs('AKROSS/2026-04/'),
+  const [ak5_blobs, ak6_blobs] = await Promise.all([
     countAzureBlobs('AKROSS/2026-05/'),
     countAzureBlobs('AKROSS/2026-06/')
   ])
@@ -44,7 +43,7 @@ export async function GET() {
     '2026-01': { transferred: 4063, total: 4063, patients: 4063, dcm: 1036, pdf: 3027, pct: 100, is_complete: true },
     '2026-02': { transferred: 29303, total: 29303, patients: 20662, dcm: 16583, pdf: 12720, pct: 100, is_complete: true },
     '2026-03': { transferred: 2818, total: 2818, patients: 2090, dcm: 2090, pdf: 2090, pct: 100, is_complete: true },
-    '2026-04': { transferred: Math.max(3042, ak4_blobs), total: 6200, patients: 1521, dcm: 1521, pdf: 1521, pct: Math.min(100, Math.round((Math.max(3042, ak4_blobs) / 6200) * 100)), is_complete: false },
+    '2026-04': { transferred: 3042, total: 3042, patients: 1521, dcm: 1521, pdf: 1521, pct: 100, is_complete: true },
     '2026-05': { transferred: Math.max(2800, ak5_blobs), total: 7100, patients: 1400, dcm: 1400, pdf: 1400, pct: Math.min(100, Math.round((Math.max(2800, ak5_blobs) / 7100) * 100)), is_complete: false },
     '2026-06': { transferred: Math.max(2100, ak6_blobs), total: 6500, patients: 1050, dcm: 1050, pdf: 1050, pct: Math.min(100, Math.round((Math.max(2100, ak6_blobs) / 6500) * 100)), is_complete: false }
   }
