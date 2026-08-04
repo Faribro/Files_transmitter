@@ -383,7 +383,7 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {months.map((mf, i) => {
                 const stats = getDynamicMonthStats(facility, mf.key)
-                const isMigrating = (facility === 'DAVO' && mf.key === '2026-07') || (facility === 'AKROSS' && ['2026-03', '2026-04', '2026-05', '2026-06'].includes(mf.key))
+                const isMigrating = (facility === 'DAVO' && mf.key === '2026-07') || (facility === 'AKROSS' && ['2026-01', '2026-03', '2026-04', '2026-05', '2026-06'].includes(mf.key))
                 const hasData = Boolean(stats && stats.patients > 0)
 
                 if (isMigrating) {

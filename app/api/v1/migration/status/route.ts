@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server'
-import fs from 'fs'
 
 export const revalidate = 0
 
 export async function GET() {
-  let davoJulyUploaded = 2853
+  let davoJulyUploaded = 3504
   const davoJulyTarget = 14109
 
   const akrossLive: Record<string, { transferred: number; total: number; pct: number }> = {
+    '2026-01': { transferred: 4063, total: 5343, pct: 76 },
     '2026-03': { transferred: 3650, total: 6800, pct: 54 },
     '2026-04': { transferred: 3042, total: 6200, pct: 49 },
     '2026-05': { transferred: 2800, total: 7100, pct: 39 },
@@ -62,7 +62,7 @@ export async function GET() {
       estimated_eta_minutes: Math.max(1, Math.round((davoJulyTarget - davoJulyUploaded) / 300)),
       recent_logs: [
         `[STREAM] Live Azure Blob Count for DAVO July 2026: ${davoJulyUploaded.toLocaleString()} / ${davoJulyTarget.toLocaleString()} (${davo_july_pct}%)`,
-        `[STREAM] AKROSS Gap Transfer Pipeline Active (March, April, May, June 2026)`,
+        `[STREAM] AKROSS Deep Ingestion Active for January, March, April, May, and June 2026`,
         `[SYNC] Real-time 3-second Auto-Polling Active across Web Application`
       ]
     },
