@@ -395,16 +395,16 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
                       whileHover={{ scale: 1.05, y: -4 }}
                       whileTap={{ scale: 0.97 }}
                       onClick={() => handleMonthClick(mf.key)}
-                      className="group relative flex flex-col items-start p-5 rounded-2xl bg-gradient-to-br from-indigo-900 via-indigo-950 to-slate-900 border-2 border-indigo-400/80 shadow-xl shadow-indigo-500/25 ring-4 ring-indigo-500/20 text-left overflow-hidden"
+                      className="group relative flex flex-col items-start p-5 rounded-2xl bg-gradient-to-br from-red-950 via-rose-950 to-slate-950 border-2 border-red-500/80 shadow-xl shadow-red-500/30 ring-4 ring-red-500/20 text-left overflow-hidden"
                     >
-                      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-indigo-500/20 via-transparent to-transparent pointer-events-none" />
+                      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-red-500/25 via-transparent to-transparent pointer-events-none" />
                       
                       <div className="w-full flex items-center justify-between mb-2 z-10">
-                        <div className="w-10 h-10 rounded-xl bg-indigo-500 text-white flex items-center justify-center shadow-lg shadow-indigo-500/50 animate-pulse">
+                        <div className="w-10 h-10 rounded-xl bg-red-600 text-white flex items-center justify-center shadow-lg shadow-red-600/50 animate-pulse">
                           <RefreshCw className="w-5 h-5 animate-spin" />
                         </div>
-                        <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 text-slate-950 shadow-md flex items-center gap-1.5 animate-pulse">
-                          <span className="w-1.5 h-1.5 rounded-full bg-slate-950" /> ⚡ Live Migrating
+                        <span className="text-[10px] font-black px-2.5 py-1 rounded-full bg-gradient-to-r from-red-500 to-rose-600 text-white shadow-md flex items-center gap-1.5 animate-pulse border border-red-400/40">
+                          <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping" /> ⚡ Live Migrating
                         </span>
                       </div>
 
@@ -413,29 +413,29 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
                       </h3>
 
                       <div className="mt-2 space-y-1.5 w-full z-10">
-                        <div className="flex items-center justify-between text-xs font-black text-indigo-200">
+                        <div className="flex items-center justify-between text-xs font-black text-red-200">
                           <span>{fmtNum(stats.patients)} patients</span>
-                          <span className="text-amber-400">{pct}%</span>
+                          <span className="text-amber-300 font-extrabold">{pct}%</span>
                         </div>
 
                         {/* Live progress bar */}
-                        <div className="w-full bg-slate-800/90 rounded-full h-2 overflow-hidden p-0.5 border border-indigo-400/30">
+                        <div className="w-full bg-slate-900/90 rounded-full h-2 overflow-hidden p-0.5 border border-red-500/40 shadow-inner">
                           <div
-                            className="bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-500 h-full rounded-full transition-all duration-500 shadow-sm"
+                            className="bg-gradient-to-r from-red-500 via-rose-500 to-orange-400 h-full rounded-full transition-all duration-500 shadow-sm"
                             style={{ width: `${pct}%` }}
                           />
                         </div>
 
-                        <p className="text-[11px] font-extrabold text-indigo-300 bg-indigo-950/80 px-2.5 py-0.5 rounded-lg border border-indigo-500/40 inline-block">
+                        <p className="text-[11px] font-extrabold text-red-200 bg-red-950/90 px-2.5 py-0.5 rounded-lg border border-red-500/50 inline-block shadow-sm">
                           {fmtNum(stats.dcm)} DCM · {fmtNum(stats.pdf)} PDF
                         </p>
                       </div>
 
-                      <div className="mt-3 flex items-center justify-between w-full text-[10px] font-black text-indigo-300 z-10">
-                        <span className="text-emerald-400 flex items-center gap-1">
+                      <div className="mt-3 flex items-center justify-between w-full text-[10px] font-black text-red-200 z-10">
+                        <span className="text-emerald-400 flex items-center gap-1 font-black">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" /> 32 Threads Active
                         </span>
-                        <div className="flex items-center gap-1 text-indigo-300 group-hover:text-white transition-colors">
+                        <div className="flex items-center gap-1 text-red-300 group-hover:text-white transition-colors">
                           <span>Explore</span><ChevronRight className="w-3 h-3" />
                         </div>
                       </div>
