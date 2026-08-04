@@ -4,7 +4,7 @@ import fs from 'fs'
 export const revalidate = 0
 
 export async function GET() {
-  let davoJulyUploaded = 8486
+  let davoJulyUploaded = 4814
   const davoJulyTarget = 14109
 
   // Direct Live Azure Storage REST query (Works everywhere, including Vercel cloud runtime)
