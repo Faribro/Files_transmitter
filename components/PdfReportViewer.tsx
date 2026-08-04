@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { ZoomIn, ZoomOut, RotateCw, RefreshCw, ExternalLink, Download, AlertTriangle, Maximize2, Minimize2 } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { ZoomIn, ZoomOut, RotateCw, RefreshCw, ExternalLink, Download, AlertTriangle, Maximize2, Minimize2, FileX } from 'lucide-react'
 
 interface PdfReportViewerProps {
   fileUrl: string
@@ -23,6 +23,41 @@ export default function PdfReportViewer({ fileUrl, filename, onClose, isMaximize
   const [errored, setErrored] = useState(false)
 
   const proxied = proxyUrl(fileUrl)
+
+  useEffect(() => {
+    if (!fileUrl) {
+      setLoaded(true)
+      setErrored(true)
+      return
+    }
+
+    let isMounted = true
+    setLoaded(false)
+    setErrored(false)
+
+    // Pre-verify that proxied URL is a valid PDF stream (HTTP 200)
+    fetch(proxied, { method: 'HEAD' })
+      .then((res) => {
+        if (isMounted) {
+          if (res.ok) {
+            setLoaded(true)
+          } else {
+            setLoaded(true)
+            setErrored(true)
+          }
+        }
+      })
+      .catch(() => {
+        if (isMounted) {
+          setLoaded(true)
+          setErrored(true)
+        }
+      })
+
+    return () => {
+      isMounted = false
+    }
+  }, [fileUrl, proxied])
 
   return (
     <div className={`flex flex-col rounded-3xl bg-slate-900 border border-slate-800 overflow-hidden shadow-2xl transition-all duration-300 ${isMaximized ? 'fixed inset-4 z-50 rounded-3xl' : 'relative'}`}>
@@ -47,14 +82,18 @@ export default function PdfReportViewer({ fileUrl, filename, onClose, isMaximize
         </div>
         
         <div className="flex items-center gap-2">
-          <a href={fileUrl} target="_blank" rel="noopener noreferrer"
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-indigo-600 hover:text-white transition-colors" title="Open in new tab">
-            <ExternalLink className="w-4 h-4" />
-          </a>
-          <a href={proxied} download={filename}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-indigo-600 hover:text-white transition-colors" title="Download PDF">
-            <Download className="w-4 h-4" />
-          </a>
+          {fileUrl && (
+            <>
+              <a href={fileUrl} target="_blank" rel="noopener noreferrer"
+                className="p-1.5 rounded-lg bg-slate-800 hover:bg-indigo-600 hover:text-white transition-colors" title="Open in new tab">
+                <ExternalLink className="w-4 h-4" />
+              </a>
+              <a href={proxied} download={filename}
+                className="p-1.5 rounded-lg bg-slate-800 hover:bg-indigo-600 hover:text-white transition-colors" title="Download PDF">
+                <Download className="w-4 h-4" />
+              </a>
+            </>
+          )}
           <button onClick={() => { setZoom(100); setRotation(0) }}
             className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] font-bold transition-colors">
             Reset Zoom
@@ -81,29 +120,19 @@ export default function PdfReportViewer({ fileUrl, filename, onClose, isMaximize
           </div>
         )}
 
-        {/* Error state */}
+        {/* Error / Not Available State */}
         {errored && (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-slate-950 z-10 p-6 text-center">
-            <AlertTriangle className="w-10 h-10 text-amber-500" />
-            <p className="text-sm font-black text-slate-200">PDF Load Failed</p>
-            <p className="text-[10px] text-slate-500 max-w-xs">
-              The browser couldn't embed this PDF inline. Use the buttons below to open or download it.
+            <FileX className="w-12 h-12 text-slate-600" />
+            <p className="text-sm font-black text-slate-300">Diagnostic PDF Report Not Available</p>
+            <p className="text-xs text-slate-500 max-w-xs">
+              This inmate record contains DICOM image scans. A separate PDF report is not present for this scan.
             </p>
-            <div className="flex gap-3 mt-2">
-              <a href={fileUrl} target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-colors">
-                <ExternalLink className="w-4 h-4" /> Open in New Tab
-              </a>
-              <a href={proxied} download={filename}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold transition-colors">
-                <Download className="w-4 h-4" /> Download
-              </a>
-            </div>
           </div>
         )}
 
         {/* Real PDF iframe */}
-        {!errored && (
+        {!errored && loaded && (
           <div
             className="origin-top-left transition-transform duration-200"
             style={{
@@ -117,14 +146,10 @@ export default function PdfReportViewer({ fileUrl, filename, onClose, isMaximize
               src={`${proxied}#toolbar=1&navpanes=0&scrollbar=1`}
               className="w-full h-full border-0"
               style={{ minHeight: `${480 * 100 / zoom}px` }}
-              onLoad={() => setLoaded(true)}
-              onError={() => { setLoaded(true); setErrored(true) }}
               title={filename}
             />
           </div>
         )}
-
-        {/* Ready badge */}
       </div>
     </div>
   )
