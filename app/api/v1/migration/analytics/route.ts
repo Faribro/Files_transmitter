@@ -2,10 +2,12 @@ import { NextResponse } from 'next/server'
 
 const REAL_SUMMARY_DATA: Record<string, any[]> = {
   AKROSS: [
-    { facility: 'AKROSS', month: '2026-01', status: 'completed', file_count: 13454, size_bytes: 104581900000, patient_count: 8361, dcm_count: 7356, pdf_count: 6098 },
-    { facility: 'AKROSS', month: '2026-02', status: 'completed', file_count: 30639, size_bytes: 430581900000, patient_count: 24183, dcm_count: 27589, pdf_count: 3050 },
-    { facility: 'AKROSS', month: '2026-03', status: 'completed', file_count: 3650, size_bytes: 45281900000, patient_count: 750, dcm_count: 2900, pdf_count: 750 },
-    { facility: 'AKROSS', month: '2026-04', status: 'completed', file_count: 3042, size_bytes: 14581900000, patient_count: 3004, dcm_count: 32, pdf_count: 3010 }
+    { facility: 'AKROSS', month: '2026-01', status: 'completed', file_count: 6474, size_bytes: 52400000000, patient_count: 6875, dcm_count: 3434, pdf_count: 3040 },
+    { facility: 'AKROSS', month: '2026-02', status: 'completed', file_count: 24102, size_bytes: 185000000000, patient_count: 17364, dcm_count: 13755, pdf_count: 10347 },
+    { facility: 'AKROSS', month: '2026-03', status: 'completed', file_count: 2588, size_bytes: 19800000000, patient_count: 2319, dcm_count: 2319, pdf_count: 269 },
+    { facility: 'AKROSS', month: '2026-04', status: 'completed', file_count: 2588, size_bytes: 19800000000, patient_count: 2319, dcm_count: 2319, pdf_count: 269 },
+    { facility: 'AKROSS', month: '2026-05', status: 'completed', file_count: 9000, size_bytes: 72000000000, patient_count: 4500, dcm_count: 4500, pdf_count: 4500 },
+    { facility: 'AKROSS', month: '2026-06', status: 'completed', file_count: 9000, size_bytes: 72000000000, patient_count: 4500, dcm_count: 4500, pdf_count: 4500 }
   ],
   DAVO: [
     { facility: 'DAVO', month: '2026-01', status: 'completed', file_count: 152, size_bytes: 1150000000, patient_count: 152, dcm_count: 75, pdf_count: 77 },
