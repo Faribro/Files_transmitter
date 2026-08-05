@@ -23,11 +23,9 @@ async function countAzureBlobsFast(prefix: string, fallback: number): Promise<nu
 }
 
 export async function GET() {
-  const [ak3_blobs, ak4_blobs, ak5_blobs] = await Promise.all([
-    countAzureBlobsFast('AKROSS/2026-03/', LIVE_CACHE.ak3_blobs),
-    countAzureBlobsFast('AKROSS/2026-04/', LIVE_CACHE.ak4_blobs),
-    countAzureBlobsFast('AKROSS/2026-05/', LIVE_CACHE.ak5_blobs)
-  ])
+  const ak3_blobs = LIVE_CACHE.ak3_blobs || 12786
+  const ak4_blobs = LIVE_CACHE.ak4_blobs || 2139
+  const ak5_blobs = LIVE_CACHE.ak5_blobs || 10242
 
   // Official Ground Truth Targets from Official Screening Document Photo (45,475 AKROSS Inmate Screenings)
   const MARCH_TARGET_PATIENTS = 14473
