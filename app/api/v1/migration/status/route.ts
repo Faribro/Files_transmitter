@@ -50,13 +50,13 @@ export async function GET() {
   const MAY_TARGET_PATIENTS = 4385
   const MAY_TARGET_FILES = MAY_TARGET_PATIENTS * 2
 
-  const marFiles = Math.max(ak3_blobs, 7812)
+  const marFiles = ak3_blobs
   const marPct = Math.min(100, Math.round((marFiles / MARCH_TARGET_FILES) * 100))
 
-  const aprFiles = Math.max(ak4_blobs, 1002)
+  const aprFiles = ak4_blobs
   const aprPct = Math.min(100, Math.round((aprFiles / APRIL_TARGET_FILES) * 100))
 
-  const mayFiles = Math.max(ak5_blobs, 149)
+  const mayFiles = ak5_blobs
   const mayPct = Math.min(100, Math.round((mayFiles / MAY_TARGET_FILES) * 100))
 
   const akross_live = {
