@@ -1,31 +1,31 @@
 import { NextResponse } from 'next/server'
-import { LIVE_CACHE } from './statusCache'
+import fs from 'fs'
+import path from 'path'
 
+export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-const SAS = 'si=PrisionSAS&spr=https&sv=2026-02-06&sr=c&sig=mFG8b9Yyzs8r7tgreyYnie25Man3QhNDEhM2dlhlbA8%3D'
-const ACCOUNT_URL = 'https://storageaccountprision.blob.core.windows.net/containerprision'
-
-async function countAzureBlobsFast(prefix: string, fallback: number): Promise<number> {
-  try {
-    const url = `${ACCOUNT_URL}?restype=container&comp=list&prefix=${encodeURIComponent(prefix)}&maxresults=5000&${SAS}`
-    const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 2500)
-    const res = await fetch(url, { cache: 'no-store', signal: controller.signal })
-    clearTimeout(timeoutId)
-    if (!res.ok) return fallback
-    const xml = await res.text()
-    const matches = xml.match(/<Name>/g)
-    return matches ? Math.max(matches.length, fallback) : fallback
-  } catch {
-    return fallback
-  }
-}
+const STATUS_CACHE_PATH = path.join(process.cwd(), 'app/api/v1/migration/status/statusCache.ts')
 
 export async function GET() {
-  const ak3_blobs = LIVE_CACHE.ak3_blobs || 12786
-  const ak4_blobs = LIVE_CACHE.ak4_blobs || 2139
-  const ak5_blobs = LIVE_CACHE.ak5_blobs || 10242
+  let ak3_blobs = 12857
+  let ak4_blobs = 2139
+  let ak5_blobs = 10242
+
+  try {
+    if (fs.existsSync(STATUS_CACHE_PATH)) {
+      const content = fs.readFileSync(STATUS_CACHE_PATH, 'utf-8')
+      const marMatch = content.match(/ak3_blobs:\s*(\d+)/)
+      const aprMatch = content.match(/ak4_blobs:\s*(\d+)/)
+      const mayMatch = content.match(/ak5_blobs:\s*(\d+)/)
+
+      if (marMatch) ak3_blobs = parseInt(marMatch[1], 10)
+      if (aprMatch) ak4_blobs = parseInt(aprMatch[1], 10)
+      if (mayMatch) ak5_blobs = parseInt(mayMatch[1], 10)
+    }
+  } catch (e) {
+    // Fallback if file read fails
+  }
 
   // Official Ground Truth Targets from Official Screening Document Photo (45,475 AKROSS Inmate Screenings)
   const MARCH_TARGET_PATIENTS = 14473
@@ -37,13 +37,13 @@ export async function GET() {
   const MAY_TARGET_PATIENTS = 4385
   const MAY_TARGET_FILES = MAY_TARGET_PATIENTS * 2 // 8,770 files
 
-  const marFiles = Math.max(ak3_blobs, LIVE_CACHE.ak3_blobs)
+  const marFiles = ak3_blobs
   const marPct = Math.min(100, Math.round((marFiles / MARCH_TARGET_FILES) * 100))
 
-  const aprFiles = Math.max(ak4_blobs, LIVE_CACHE.ak4_blobs)
+  const aprFiles = ak4_blobs
   const aprPct = Math.min(100, Math.round((aprFiles / APRIL_TARGET_FILES) * 100))
 
-  const mayFiles = Math.max(ak5_blobs, LIVE_CACHE.ak5_blobs)
+  const mayFiles = ak5_blobs
   const mayPct = Math.min(100, Math.round((mayFiles / MAY_TARGET_FILES) * 100))
 
   const akross_live = {

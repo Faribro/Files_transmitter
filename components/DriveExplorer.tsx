@@ -148,7 +148,7 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
     setSelectedPatient(null)
   }, [facility, initialMonth])
 
-  // Live Auto-Polling Interval (3 seconds) for real-time streaming transfer updates
+  // Live Auto-Polling Interval (500ms instantaneous) for real-time streaming transfer updates
   const [liveStatus, setLiveStatus] = useState<any>(null)
   useEffect(() => {
     const fetchStatus = () => {
@@ -158,7 +158,7 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
         .catch(() => {})
     }
     fetchStatus()
-    const timer = setInterval(fetchStatus, 3000)
+    const timer = setInterval(fetchStatus, 500)
     return () => clearInterval(timer)
   }, [])
 
