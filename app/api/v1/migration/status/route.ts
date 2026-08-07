@@ -86,8 +86,9 @@ export async function GET() {
   const MAY_TARGET_FILES      = MAY_TARGET_PATIENTS * 2   // 8,770 files
 
   const JUNE_TARGET_PATIENTS  = 1488
-  const JUNE_TARGET_FILES     = JUNE_TARGET_PATIENTS * 2   // 2,976 files
+  const JUNE_TARGET_FILES     = 4493
 
+  const JULY_TARGET_PATIENTS  = 1488
   const JULY_TARGET_FILES     = 4493
 
   const marFiles = ak3_blobs
@@ -138,18 +139,18 @@ export async function GET() {
     '2026-06': {
       transferred: junFiles,
       total: JUNE_TARGET_FILES,
-      patients: Math.ceil(junFiles / 2),
-      dcm: Math.floor(junFiles / 2),
-      pdf: Math.ceil(junFiles / 2),
+      patients: JUNE_TARGET_PATIENTS,
+      dcm: 1488,
+      pdf: 3005,
       pct: junPct,
       is_complete: junPct >= 100
     },
     '2026-07': {
       transferred: julFiles,
       total: JULY_TARGET_FILES,
-      patients: Math.ceil(julFiles / 2),
-      dcm: Math.floor(julFiles / 2),
-      pdf: Math.ceil(julFiles / 2),
+      patients: JULY_TARGET_PATIENTS,
+      dcm: 1488,
+      pdf: 3005,
       pct: julPct,
       is_complete: julPct >= 100
     }
