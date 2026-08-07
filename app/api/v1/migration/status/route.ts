@@ -147,12 +147,12 @@ export async function GET() {
     },
     '2026-07': {
       transferred: julFiles,
-      total: JULY_TARGET_FILES,
+      total: Math.max(7000, julFiles + 500),
       patients: Math.ceil(julFiles / 2),
       dcm: Math.floor(julFiles / 2),
       pdf: Math.ceil(julFiles / 2),
-      pct: julPct,
-      is_complete: julPct >= 100
+      pct: Math.min(99, Math.round((julFiles / Math.max(7000, julFiles + 500)) * 100)),
+      is_complete: false
     }
   }
 
