@@ -487,10 +487,10 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
 
                     <div className="mt-2 space-y-1 w-full">
                       <p className="text-sm font-extrabold text-indigo-950">
-                        {fmtNum(stats.patients)} patients
+                        {fmtNum(akrossLiveData ? akrossLiveData.patients : stats.patients)} patients
                       </p>
                       <p className="text-xs font-bold text-slate-700 bg-white/90 px-2.5 py-0.5 rounded-lg border border-slate-200 shadow-sm inline-block">
-                        {fmtNum(stats.dcm)} DCM · {fmtNum(stats.pdf)} PDF
+                        {fmtNum(akrossLiveData ? akrossLiveData.dcm : stats.dcm)} DCM · {fmtNum(akrossLiveData ? akrossLiveData.pdf : stats.pdf)} PDF
                       </p>
                     </div>
 
