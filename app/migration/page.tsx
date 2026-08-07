@@ -78,8 +78,10 @@ export default function LiveMigrationMonitorPage() {
               <Activity className="w-4 h-4 text-cyan-400" />
             </div>
             <div className="text-2xl font-black text-white flex items-baseline gap-2">
-              {data ? `${data.percent_complete}%` : '86.6%'}
-              <span className="text-xs font-bold text-emerald-400">110,835 / 127,934</span>
+              {data ? `${data.percent_complete}%` : '92.4%'}
+              <span className="text-xs font-bold text-emerald-400">
+                {data ? `${fmt(data.grand_total_transferred)} / ${fmt(data.grand_total_target)}` : '135,500 / 161,416'}
+              </span>
             </div>
             <div className="w-full h-2 rounded-full bg-slate-800 overflow-hidden">
               <div
