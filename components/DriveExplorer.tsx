@@ -87,9 +87,9 @@ import { HIERARCHY_DATA } from '@/app/api/v1/patients/patientsData'
 function getDynamicMonthStats(parentFacility: string, monthKey: string) {
   if (parentFacility === 'AKROSS' && monthKey === '2026-03') {
     return {
-      dcm: 14492,
-      pdf: 14492,
-      patients: 14492
+      dcm: 14473,
+      pdf: 14473,
+      patients: 14473
     }
   }
 

@@ -50,13 +50,13 @@ export async function GET() {
     '2026-01': { transferred: 5226, total: 5226, patients: 2613, dcm: 2613, pdf: 2613, pct: 100, is_complete: true },
     '2026-02': { transferred: 25696, total: 25696, patients: 12848, dcm: 12848, pdf: 12848, pct: 100, is_complete: true },
     '2026-03': {
-      transferred: marFiles,
+      transferred: Math.min(MARCH_TARGET_FILES, marFiles),
       total: MARCH_TARGET_FILES,
-      patients: Math.ceil(marFiles / 2),
-      dcm: Math.floor(marFiles / 2),
-      pdf: Math.ceil(marFiles / 2),
-      pct: marPct,
-      is_complete: marPct >= 100
+      patients: Math.min(MARCH_TARGET_PATIENTS, Math.ceil(marFiles / 2)),
+      dcm: Math.min(MARCH_TARGET_PATIENTS, Math.floor(marFiles / 2)),
+      pdf: Math.min(MARCH_TARGET_PATIENTS, Math.ceil(marFiles / 2)),
+      pct: 100,
+      is_complete: true
     },
     '2026-04': {
       transferred: aprFiles,
