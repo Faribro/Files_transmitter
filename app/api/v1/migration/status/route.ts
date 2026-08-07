@@ -37,20 +37,22 @@ async function countAzureBlobs(prefix: string): Promise<number> {
 
 export async function GET() {
   let ak3_blobs = 52276
-  let ak4_blobs = 7200
+  let ak4_blobs = 11300
   let ak5_blobs = 10242
 
   try {
-    const [p1, p2, may1, may2] = await Promise.all([
-      countAzureBlobs('AKROSS/2026-04/'),
-      countAzureBlobs('Prison_and_OCS_Intervention/Medical_Files/AKROSS/2026-04/'),
-      countAzureBlobs('AKROSS/2026-05/'),
-      countAzureBlobs('Prison_and_OCS_Intervention/Medical_Files/AKROSS/2026-05/')
-    ])
-    if (p1 + p2 > 0) ak4_blobs = p1 + p2
-    if (may1 + may2 > 0) ak5_blobs = may1 + may2
+    if (fs.existsSync(STATUS_CACHE_PATH)) {
+      const content = fs.readFileSync(STATUS_CACHE_PATH, 'utf-8')
+      const marMatch = content.match(/ak3_blobs:\s*(\d+)/)
+      const aprMatch = content.match(/ak4_blobs:\s*(\d+)/)
+      const mayMatch = content.match(/ak5_blobs:\s*(\d+)/)
+
+      if (marMatch) ak3_blobs = parseInt(marMatch[1], 10)
+      if (aprMatch) ak4_blobs = parseInt(aprMatch[1], 10)
+      if (mayMatch) ak5_blobs = parseInt(mayMatch[1], 10)
+    }
   } catch (e) {
-    // Use fallback if Azure REST query encounters network issue
+    // Fallback if file read fails
   }
 
   // Official Ground Truth Targets from Official Screening Document Photo (45,475 AKROSS + 35,233 DAVO = 80,708 Inmate Screenings)
