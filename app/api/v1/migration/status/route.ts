@@ -152,14 +152,14 @@ export async function GET() {
       pct: junPct,
       is_complete: junPct >= 100
     },
-    '2026-07': julyLiveJson || {
+    '2026-07': julyLiveJson ? { ...julyLiveJson, is_complete: julyLiveJson.transferred >= 4493 } : {
       transferred: julFiles,
       total: JULY_TARGET_FILES,
       patients: Math.ceil(julFiles / 3),
       dcm: Math.floor(julFiles / 3),
       pdf: Math.ceil((julFiles * 2) / 3),
       pct: Math.min(99, Math.round((julFiles / JULY_TARGET_FILES) * 100)),
-      is_complete: julFiles >= JULY_TARGET_FILES
+      is_complete: false
     }
   }
 

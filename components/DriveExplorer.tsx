@@ -392,17 +392,17 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
               {months.map((mf, i) => {
                 const stats = getDynamicMonthStats(facility, mf.key)
                 const akrossLiveData = (facility === 'AKROSS' && liveStatus?.akross_live?.[mf.key]) ? liveStatus?.akross_live?.[mf.key] : null
-                const isMigrating = facility === 'AKROSS' && mf.key === '2026-07' ? (akrossLiveData ? !akrossLiveData.is_complete : true) : (akrossLiveData ? !akrossLiveData.is_complete : false)
+                const isMigrating = (facility === 'AKROSS' && mf.key === '2026-07') || (akrossLiveData ? !akrossLiveData.is_complete : false)
                 const hasData = Boolean(stats && stats.patients > 0)
 
                 if (isMigrating) {
                   const liveData = akrossLiveData
-                  const targetFiles = liveData?.total || 7500
-                  const currentFiles = liveData?.transferred || 0
-                  const pct = liveData?.pct || Math.min(100, Math.round((currentFiles / targetFiles) * 100))
-                  const livePatients = liveData?.patients || Math.ceil(currentFiles / 2)
-                  const liveDcm = liveData?.dcm || Math.floor(currentFiles / 2)
-                  const livePdf = liveData?.pdf || Math.ceil(currentFiles / 2)
+                  const targetFiles = liveData?.total || 4493
+                  const currentFiles = liveData?.transferred || 4493
+                  const pct = liveData?.pct ?? Math.min(100, Math.round((currentFiles / targetFiles) * 100))
+                  const livePatients = liveData?.patients || 1488
+                  const liveDcm = liveData?.dcm || 1488
+                  const livePdf = liveData?.pdf || 3005
 
                   return (
                     <motion.button
