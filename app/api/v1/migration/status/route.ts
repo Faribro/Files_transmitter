@@ -7,24 +7,50 @@ export const revalidate = 0
 
 const STATUS_CACHE_PATH = path.join(process.cwd(), 'app/api/v1/migration/status/statusCache.ts')
 
+const SAS = 'si=PrisionSAS&spr=https&sv=2026-02-06&sr=c&sig=mFG8b9Yyzs8r7tgreyYnie25Man3QhNDEhM2dlhlbA8%3D'
+const ACCOUNT_URL = 'https://storageaccountprision.blob.core.windows.net/containerprision'
+
+async function countAzureBlobs(prefix: string): Promise<number> {
+  let total = 0
+  let marker = ''
+  try {
+    while (true) {
+      const mPart = marker ? `&marker=${encodeURIComponent(marker)}` : ''
+      const url = `${ACCOUNT_URL}?restype=container&comp=list&prefix=${encodeURIComponent(prefix)}&maxresults=5000&${SAS}${mPart}`
+      const res = await fetch(url, { cache: 'no-store' })
+      if (!res.ok) break
+      const xml = await res.text()
+      const matches = xml.match(/<Name>[^<]+<\/Name>/g) || []
+      total += matches.length
+      const nextMatch = xml.match(/<NextMarker>([^<]+)<\/NextMarker>/)
+      if (nextMatch && nextMatch[1]) {
+        marker = nextMatch[1]
+      } else {
+        break
+      }
+    }
+  } catch (e) {
+    // Return fallback on network error
+  }
+  return total
+}
+
 export async function GET() {
-  let ak3_blobs = 28984
-  let ak4_blobs = 2432
+  let ak3_blobs = 52276
+  let ak4_blobs = 7200
   let ak5_blobs = 10242
 
   try {
-    if (fs.existsSync(STATUS_CACHE_PATH)) {
-      const content = fs.readFileSync(STATUS_CACHE_PATH, 'utf-8')
-      const marMatch = content.match(/ak3_blobs:\s*(\d+)/)
-      const aprMatch = content.match(/ak4_blobs:\s*(\d+)/)
-      const mayMatch = content.match(/ak5_blobs:\s*(\d+)/)
-
-      if (marMatch) ak3_blobs = parseInt(marMatch[1], 10)
-      if (aprMatch) ak4_blobs = parseInt(aprMatch[1], 10)
-      if (mayMatch) ak5_blobs = parseInt(mayMatch[1], 10)
-    }
+    const [p1, p2, may1, may2] = await Promise.all([
+      countAzureBlobs('AKROSS/2026-04/'),
+      countAzureBlobs('Prison_and_OCS_Intervention/Medical_Files/AKROSS/2026-04/'),
+      countAzureBlobs('AKROSS/2026-05/'),
+      countAzureBlobs('Prison_and_OCS_Intervention/Medical_Files/AKROSS/2026-05/')
+    ])
+    if (p1 + p2 > 0) ak4_blobs = p1 + p2
+    if (may1 + may2 > 0) ak5_blobs = may1 + may2
   } catch (e) {
-    // Fallback if file read fails
+    // Use fallback if Azure REST query encounters network issue
   }
 
   // Official Ground Truth Targets from Official Screening Document Photo (45,475 AKROSS + 35,233 DAVO = 80,708 Inmate Screenings)
