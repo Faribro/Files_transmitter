@@ -40,6 +40,7 @@ export async function GET() {
   let ak4_blobs = 19336
   let ak5_blobs = 8770
   let ak6_blobs = 3450
+  let ak7_blobs = 0
 
   try {
     if (fs.existsSync(STATUS_CACHE_PATH)) {
@@ -48,28 +49,33 @@ export async function GET() {
       const m4 = content.match(/ak4_blobs:\s*(\d+)/)
       const m5 = content.match(/ak5_blobs:\s*(\d+)/)
       const m6 = content.match(/ak6_blobs:\s*(\d+)/)
+      const m7 = content.match(/ak7_blobs:\s*(\d+)/)
       if (m3) ak3_blobs = parseInt(m3[1])
       if (m4) ak4_blobs = parseInt(m4[1])
       if (m5) ak5_blobs = parseInt(m5[1])
       if (m6) ak6_blobs = parseInt(m6[1])
+      if (m7) ak7_blobs = parseInt(m7[1])
     } else {
-      const [p1, p2, may1, may2, jun1, jun2] = await Promise.all([
+      const [p1, p2, may1, may2, jun1, jun2, jul1, jul2] = await Promise.all([
         countAzureBlobs('AKROSS/2026-04/'),
         countAzureBlobs('Prison_and_OCS_Intervention/Medical_Files/AKROSS/2026-04/'),
         countAzureBlobs('AKROSS/2026-05/'),
         countAzureBlobs('Prison_and_OCS_Intervention/Medical_Files/AKROSS/2026-05/'),
         countAzureBlobs('AKROSS/2026-06/'),
-        countAzureBlobs('Prison_and_OCS_Intervention/Medical_Files/AKROSS/2026-06/')
+        countAzureBlobs('Prison_and_OCS_Intervention/Medical_Files/AKROSS/2026-06/'),
+        countAzureBlobs('AKROSS/2026-07/'),
+        countAzureBlobs('Prison_and_OCS_Intervention/Medical_Files/AKROSS/2026-07/')
       ])
       if (p1 + p2 > 0) ak4_blobs = p1 + p2
       if (may1 + may2 > 0) ak5_blobs = may1 + may2
       if (jun1 + jun2 > 0) ak6_blobs = jun1 + jun2
+      if (jul1 + jul2 > 0) ak7_blobs = jul1 + jul2
     }
   } catch (e) {
     // Use fallback if reading cache or Azure query fails
   }
 
-  // Official Ground Truth Targets from Official Screening Document Photo (45,475 AKROSS + 35,233 DAVO = 80,708 Inmate Screenings)
+  // Official Ground Truth Targets
   const MARCH_TARGET_PATIENTS = 14473
   const MARCH_TARGET_FILES    = MARCH_TARGET_PATIENTS * 2 // 28,946 files
 
@@ -82,6 +88,8 @@ export async function GET() {
   const JUNE_TARGET_PATIENTS  = 1488
   const JUNE_TARGET_FILES     = JUNE_TARGET_PATIENTS * 2   // 2,976 files
 
+  const JULY_TARGET_FILES     = 4493
+
   const marFiles = ak3_blobs
   const marPct   = Math.min(100, Math.round((marFiles / MARCH_TARGET_FILES) * 100))
 
@@ -93,6 +101,9 @@ export async function GET() {
 
   const junFiles = ak6_blobs
   const junPct   = Math.min(100, Math.round((junFiles / JUNE_TARGET_FILES) * 100))
+
+  const julFiles = ak7_blobs
+  const julPct   = Math.min(100, Math.round((julFiles / JULY_TARGET_FILES) * 100))
 
   const akross_live = {
     '2026-01': { transferred: 5226, total: 5226, patients: 2613, dcm: 2613, pdf: 2613, pct: 100, is_complete: true },
@@ -132,11 +143,20 @@ export async function GET() {
       pdf: Math.ceil(junFiles / 2),
       pct: junPct,
       is_complete: junPct >= 100
+    },
+    '2026-07': {
+      transferred: julFiles,
+      total: JULY_TARGET_FILES,
+      patients: Math.ceil(julFiles / 2),
+      dcm: Math.floor(julFiles / 2),
+      pdf: Math.ceil(julFiles / 2),
+      pct: julPct,
+      is_complete: julPct >= 100
     }
   }
 
   // Calculate dynamic total files transferred across all months
-  const total_akross_transferred = 5226 + 25696 + marFiles + aprFiles + mayFiles + junFiles
+  const total_akross_transferred = 5226 + 25696 + marFiles + aprFiles + mayFiles + junFiles + julFiles
   const total_davo_transferred = 70466
   const grand_total_transferred = total_akross_transferred + total_davo_transferred
   const grand_total_target = 80708 * 2 // 161,416 files
