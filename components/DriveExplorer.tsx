@@ -394,7 +394,7 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
               {months.map((mf, i) => {
                 const stats = getDynamicMonthStats(facility, mf.key)
                 const akrossLiveData = (facility === 'AKROSS' && liveStatus?.akross_live?.[mf.key]) ? liveStatus?.akross_live?.[mf.key] : null
-                const isMigrating = (facility === 'AKROSS' && mf.key === '2026-07') || (akrossLiveData ? !akrossLiveData.is_complete : false)
+                const isMigrating = akrossLiveData ? !akrossLiveData.is_complete : false
                 const hasData = Boolean(stats && stats.patients > 0)
 
                 if (isMigrating) {
