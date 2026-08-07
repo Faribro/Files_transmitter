@@ -123,8 +123,8 @@ export async function GET() {
   const JUNE_TARGET_PATIENTS  = 1488
   const JUNE_TARGET_FILES     = 4493
 
-  const JULY_TARGET_PATIENTS  = 361
-  const JULY_TARGET_FILES     = 3366
+  const JULY_TARGET_PATIENTS  = 1488
+  const JULY_TARGET_FILES     = 4493
 
   const marFiles = ak3_blobs
   const marPct   = Math.min(100, Math.round((marFiles / MARCH_TARGET_FILES) * 100))
@@ -183,8 +183,8 @@ export async function GET() {
     '2026-07': {
       transferred: Math.min(JULY_TARGET_FILES, julFiles),
       total: JULY_TARGET_FILES,
-      patients: Math.min(361, Math.ceil(julFiles / 3)),
-      dcm: Math.min(361, Math.floor(julFiles / 3)),
+      patients: Math.min(1488, Math.ceil(julFiles / 3)),
+      dcm: Math.min(1488, Math.floor(julFiles / 3)),
       pdf: Math.min(3005, Math.ceil((julFiles * 2) / 3)),
       pct: julPct,
       is_complete: julFiles >= JULY_TARGET_FILES

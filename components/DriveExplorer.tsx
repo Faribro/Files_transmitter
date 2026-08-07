@@ -92,7 +92,7 @@ function getDynamicMonthStats(parentFacility: string, monthKey: string) {
     return { dcm: 1488, pdf: 3005, patients: 1488 }
   }
   if (parentFacility === 'AKROSS' && monthKey === '2026-07') {
-    return { dcm: 361, pdf: 3005, patients: 361 }
+    return { dcm: 1488, pdf: 3005, patients: 1488 }
   }
 
   const facData = HIERARCHY_DATA[parentFacility]?.[monthKey] || {}
