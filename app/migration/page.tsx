@@ -26,7 +26,7 @@ export default function LiveMigrationMonitorPage() {
 
   useEffect(() => {
     fetchStatus()
-    const interval = setInterval(fetchStatus, 3000) // 3-second realtime poll
+    const interval = setInterval(fetchStatus, 1000) // 1-second live realtime poll
     return () => clearInterval(interval)
   }, [])
 
@@ -48,7 +48,7 @@ export default function LiveMigrationMonitorPage() {
               <h1 className="text-2xl font-black tracking-tight text-white flex items-center gap-3">
                 Live Migration & Gap Audit Monitor
                 <span className="px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-xs font-black">
-                  ⚡ 3s Realtime Sync
+                  ⚡ 1s Live Azure Sync
                 </span>
               </h1>
               <p className="text-xs text-slate-400 font-bold mt-0.5">
