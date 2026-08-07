@@ -35,51 +35,79 @@ async function countAzureBlobs(prefix: string): Promise<number> {
   return total
 }
 
+async function countAkrossJulyBlobs(): Promise<number> {
+  let total = 0
+  let marker = ''
+  try {
+    while (true) {
+      const mPart = marker ? `&marker=${encodeURIComponent(marker)}` : ''
+      const url = `${ACCOUNT_URL}?restype=container&comp=list&prefix=AKROSS%2F2026-07%2F&maxresults=5000&${SAS}${mPart}`
+      const res = await fetch(url, { cache: 'no-store' })
+      if (!res.ok) break
+      const xml = await res.text()
+      const matches = xml.match(/<Name>[^<]+<\/Name>/g) || []
+      for (const m of matches) {
+        const name = m.replace('<Name>', '').replace('</Name>', '')
+        const slashCount = (name.match(/\//g) || []).length
+        if (slashCount === 2 && !name.toLowerCase().endsWith('desktop.ini')) {
+          total++
+        }
+      }
+      const nextMatch = xml.match(/<NextMarker>([^<]+)<\/NextMarker>/)
+      if (nextMatch && nextMatch[1]) {
+        marker = nextMatch[1]
+      } else {
+        break
+      }
+    }
+  } catch (e) {}
+  return total
+}
+
 export async function GET() {
   let ak3_blobs = 52276
   let ak4_blobs = 19336
   let ak5_blobs = 8770
   let ak6_blobs = 3450
   let ak7_blobs = 0
-  let julyLiveJson: any = null
-  const JULY_STATUS_PATH = '/home/azureuser/medical-migration/july_status.json'
+
+  let isCacheFresh = false
   try {
-    if (fs.existsSync(JULY_STATUS_PATH)) {
-      julyLiveJson = JSON.parse(fs.readFileSync(JULY_STATUS_PATH, 'utf-8'))
+    if (fs.existsSync(STATUS_CACHE_PATH)) {
+      const stat = fs.statSync(STATUS_CACHE_PATH)
+      if (Date.now() - stat.mtimeMs < 15000) {
+        isCacheFresh = true
+        const content = fs.readFileSync(STATUS_CACHE_PATH, 'utf-8')
+        const m3 = content.match(/ak3_blobs:\s*(\d+)/)
+        const m4 = content.match(/ak4_blobs:\s*(\d+)/)
+        const m5 = content.match(/ak5_blobs:\s*(\d+)/)
+        const m6 = content.match(/ak6_blobs:\s*(\d+)/)
+        const m7 = content.match(/ak7_blobs:\s*(\d+)/)
+        if (m3) ak3_blobs = parseInt(m3[1])
+        if (m4) ak4_blobs = parseInt(m4[1])
+        if (m5) ak5_blobs = parseInt(m5[1])
+        if (m6) ak6_blobs = parseInt(m6[1])
+        if (m7) ak7_blobs = parseInt(m7[1])
+      }
     }
   } catch (e) {}
 
-  try {
-    if (fs.existsSync(STATUS_CACHE_PATH)) {
-      const content = fs.readFileSync(STATUS_CACHE_PATH, 'utf-8')
-      const m3 = content.match(/ak3_blobs:\s*(\d+)/)
-      const m4 = content.match(/ak4_blobs:\s*(\d+)/)
-      const m5 = content.match(/ak5_blobs:\s*(\d+)/)
-      const m6 = content.match(/ak6_blobs:\s*(\d+)/)
-      const m7 = content.match(/ak7_blobs:\s*(\d+)/)
-      if (m3) ak3_blobs = parseInt(m3[1])
-      if (m4) ak4_blobs = parseInt(m4[1])
-      if (m5) ak5_blobs = parseInt(m5[1])
-      if (m6) ak6_blobs = parseInt(m6[1])
-      if (m7) ak7_blobs = parseInt(m7[1])
-    } else {
-      const [p1, p2, may1, may2, jun1, jun2, jul1, jul2] = await Promise.all([
+  if (!isCacheFresh) {
+    try {
+      const [p1, p2, may1, may2, jun1, jun2, jul1] = await Promise.all([
         countAzureBlobs('AKROSS/2026-04/'),
         countAzureBlobs('Prison_and_OCS_Intervention/Medical_Files/AKROSS/2026-04/'),
         countAzureBlobs('AKROSS/2026-05/'),
         countAzureBlobs('Prison_and_OCS_Intervention/Medical_Files/AKROSS/2026-05/'),
         countAzureBlobs('AKROSS/2026-06/'),
         countAzureBlobs('Prison_and_OCS_Intervention/Medical_Files/AKROSS/2026-06/'),
-        countAzureBlobs('AKROSS/2026-07/'),
-        countAzureBlobs('Prison_and_OCS_Intervention/Medical_Files/AKROSS/2026-07/')
+        countAkrossJulyBlobs()
       ])
       if (p1 + p2 > 0) ak4_blobs = p1 + p2
       if (may1 + may2 > 0) ak5_blobs = may1 + may2
       if (jun1 + jun2 > 0) ak6_blobs = jun1 + jun2
-      if (jul1 + jul2 > 0) ak7_blobs = jul1 + jul2
-    }
-  } catch (e) {
-    // Use fallback if reading cache or Azure query fails
+      if (jul1 > 0) ak7_blobs = jul1
+    } catch (e) {}
   }
 
   // Official Ground Truth Targets
