@@ -451,7 +451,7 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
 
                       <div className="mt-3 flex items-center justify-between w-full text-[10px] font-black text-red-200 z-10">
                         <span className="text-emerald-400 flex items-center gap-1 font-black">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" /> 32 Threads Active
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" /> Live Stream Active
                         </span>
                         <div className="flex items-center gap-1 text-red-300 group-hover:text-white transition-colors">
                           <span>Explore</span><ChevronRight className="w-3 h-3" />
