@@ -484,11 +484,11 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
                       }`}>
                         <Folder className="w-6 h-6" />
                       </div>
-                      <span className={`text-[10px] font-black px-2.5 py-1 rounded-full shadow-sm flex items-center gap-1 ${
-                        hasData ? 'bg-emerald-500 text-white' : 'bg-slate-200 text-slate-500 border border-slate-300'
-                      }`}>
-                        {hasData ? <><span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" /> Active Data</> : '⏳ Scheduled'}
-                      </span>
+                      {!hasData && (
+                        <span className="text-[10px] font-black px-2.5 py-1 rounded-full shadow-sm flex items-center gap-1 bg-slate-200 text-slate-500 border border-slate-300">
+                          ⏳ Scheduled
+                        </span>
+                      )}
                     </div>
 
                     <h3 className="text-xl font-black tracking-tight text-slate-900 group-hover:text-indigo-700">
