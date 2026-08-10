@@ -459,7 +459,6 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div>
                 <h3 className="text-base font-black text-slate-900">24-Month Master Directory — {facility}</h3>
-                <p className="text-xs font-bold text-slate-400">All data aggregated directly from live Azure Blob storage</p>
               </div>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
