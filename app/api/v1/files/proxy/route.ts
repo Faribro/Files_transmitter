@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const NEW_AZURE_SAS_TOKEN = 'si=PrisionSAS&spr=https&sv=2026-02-06&sr=c&sig=mFG8b9Yyzs8r7tgreyYnie25Man3QhNDEhM2dlhlbA8%3D'
+const NEW_AZURE_SAS_TOKEN = 'si=PrisionSAS&spr=https&sv=2024-11-04&sr=c&sig=fVQkATH%2FBnnp3U1XncXpuFcs9RyBmDRhyPfCGYiwCx4%3D'
 
 export async function GET(request: NextRequest) {
   try {
