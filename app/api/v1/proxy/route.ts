@@ -3,28 +3,74 @@ import { NextRequest, NextResponse } from 'next/server'
 const AZURE_SAS_TOKEN = 'si=PrisionSAS&spr=https&sv=2026-02-06&sr=c&sig=mFG8b9Yyzs8r7tgreyYnie25Man3QhNDEhM2dlhlbA8%3D'
 
 function getPathVariants(urlPath: string): string[] {
-  const variants: string[] = [urlPath]
+  const baseVariants: string[] = [urlPath]
 
-  if (urlPath.includes('/AKROSS/')) {
-    variants.push(urlPath.replace('/AKROSS/', '/Medical_Files/AKROSS/'))
-  }
-  if (urlPath.includes('/Medical_Files/AKROSS/')) {
-    variants.push(urlPath.replace('/Medical_Files/AKROSS/', '/AKROSS/'))
-  }
-  if (urlPath.includes('/DAVO/')) {
-    variants.push(urlPath.replace('/DAVO/', '/Medical_Files/DAVO/'))
-    variants.push(urlPath.replace('/DAVO/', '/Prison_and_OCS_Intervention/Medical_Files/DAVO/'))
-  }
-  if (urlPath.includes('/Medical_Files/DAVO/')) {
-    variants.push(urlPath.replace('/Medical_Files/DAVO/', '/Prison_and_OCS_Intervention/Medical_Files/DAVO/'))
-    variants.push(urlPath.replace('/Medical_Files/DAVO/', '/DAVO/'))
-  }
-  if (urlPath.includes('/Prison_and_OCS_Intervention/Medical_Files/DAVO/')) {
-    variants.push(urlPath.replace('/Prison_and_OCS_Intervention/Medical_Files/DAVO/', '/Medical_Files/DAVO/'))
-    variants.push(urlPath.replace('/Prison_and_OCS_Intervention/Medical_Files/DAVO/', '/DAVO/'))
+  // 1. Filename suffix / extension variations
+  if (urlPath.endsWith('_report.pdf')) {
+    baseVariants.push(urlPath.replace('_report.pdf', '.pdf'))
+  } else if (urlPath.endsWith('.pdf')) {
+    baseVariants.push(urlPath.slice(0, -4) + '_report.pdf')
   }
 
-  return Array.from(new Set(variants))
+  // 2. Flatten subfolders: /AKROSS/2026-06/AS26AKR060002/AS26AKR060002_report.pdf -> /AKROSS/2026-06/AS26AKR060002_report.pdf & AS26AKR060002.pdf
+  const parts = urlPath.split('/')
+  if (parts.length >= 5) {
+    const filename = parts[parts.length - 1]
+    const flatPath = [...parts.slice(0, parts.length - 2), filename].join('/')
+    baseVariants.push(flatPath)
+    if (filename.endsWith('_report.pdf')) {
+      baseVariants.push([...parts.slice(0, parts.length - 2), filename.replace('_report.pdf', '.pdf')].join('/'))
+    } else if (filename.endsWith('.pdf')) {
+      baseVariants.push([...parts.slice(0, parts.length - 2), filename.slice(0, -4) + '_report.pdf'].join('/'))
+    }
+  }
+
+  // 3. Month folder cross-match (e.g., April_2026, 2026-04, 2026-02, 2026-06, etc.)
+  const monthMap: Record<string, string[]> = {
+    '2026-02': ['Feb_2026', 'February_2026', 'April_2026', '2026-04', '2026-03'],
+    '2026-04': ['April_2026', '2026-02', 'Feb_2026'],
+    '2026-03': ['March_2026', '2026-03'],
+    '2026-06': ['June_2026', '2026-06', '2026-07'],
+    '2026-07': ['July_2026', '2026-07', '2026-06'],
+  }
+
+  const step2Variants: string[] = []
+  for (const v of baseVariants) {
+    step2Variants.push(v)
+    for (const [mKey, mVal] of Object.entries(monthMap)) {
+      if (v.includes(`/${mKey}/`)) {
+        for (const altM of mVal) {
+          step2Variants.push(v.replace(`/${mKey}/`, `/${altM}/`))
+        }
+      }
+    }
+  }
+
+  // 4. Facility Prefix variations
+  const finalVariants: string[] = []
+  for (const v of step2Variants) {
+    finalVariants.push(v)
+    if (v.includes('/AKROSS/')) {
+      finalVariants.push(v.replace('/AKROSS/', '/Medical_Files/AKROSS/'))
+    }
+    if (v.includes('/Medical_Files/AKROSS/')) {
+      finalVariants.push(v.replace('/Medical_Files/AKROSS/', '/AKROSS/'))
+    }
+    if (v.includes('/DAVO/')) {
+      finalVariants.push(v.replace('/DAVO/', '/Medical_Files/DAVO/'))
+      finalVariants.push(v.replace('/DAVO/', '/Prison_and_OCS_Intervention/Medical_Files/DAVO/'))
+    }
+    if (v.includes('/Medical_Files/DAVO/')) {
+      finalVariants.push(v.replace('/Medical_Files/DAVO/', '/Prison_and_OCS_Intervention/Medical_Files/DAVO/'))
+      finalVariants.push(v.replace('/Medical_Files/DAVO/', '/DAVO/'))
+    }
+    if (v.includes('/Prison_and_OCS_Intervention/Medical_Files/DAVO/')) {
+      finalVariants.push(v.replace('/Prison_and_OCS_Intervention/Medical_Files/DAVO/', '/Medical_Files/DAVO/'))
+      finalVariants.push(v.replace('/Prison_and_OCS_Intervention/Medical_Files/DAVO/', '/DAVO/'))
+    }
+  }
+
+  return Array.from(new Set(finalVariants))
 }
 
 async function handleProxyRequest(request: NextRequest, isHead = false) {
@@ -68,10 +114,26 @@ async function handleProxyRequest(request: NextRequest, isHead = false) {
     }
 
     if (!azureRes || !azureRes.ok) {
-      // Quiet 404 response for non-existent reports without console.error log noise
+      // Quiet 200 response with X-File-Available: false for non-existent reports without console.error log noise
+      if (isHead) {
+        return new NextResponse(null, {
+          status: 200,
+          headers: {
+            'X-File-Available': 'false',
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*',
+          }
+        })
+      }
       return NextResponse.json(
-        { error: 'Specified file does not exist in Azure Storage' },
-        { status: 404 }
+        { available: false, error: 'Specified file does not exist in Azure Storage' },
+        {
+          status: 200,
+          headers: {
+            'X-File-Available': 'false',
+            'Access-Control-Allow-Origin': '*',
+          }
+        }
       )
     }
 

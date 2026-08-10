@@ -39,7 +39,7 @@ export default function PdfReportViewer({ fileUrl, filename, onClose, isMaximize
     fetch(proxied, { method: 'HEAD' })
       .then((res) => {
         if (isMounted) {
-          if (res.ok) {
+          if (res.ok && res.headers.get('x-file-available') !== 'false') {
             setLoaded(true)
           } else {
             setLoaded(true)
