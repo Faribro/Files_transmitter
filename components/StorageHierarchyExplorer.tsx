@@ -404,8 +404,9 @@ export default function StorageHierarchyExplorer() {
                   <span className="font-semibold text-slate-700">{r.facilities}</span>
                 </div>
               </div>
-            )
-          })}
+            </div>
+          )
+        })}
         </div>
       </div>
 
