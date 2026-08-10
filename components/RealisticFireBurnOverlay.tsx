@@ -21,8 +21,9 @@ export default function RealisticFireBurnOverlay({ durationMs = 800 }: { duratio
     const canvas = canvasRef.current
     if (!canvas) return
 
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
+    const rawCtx = canvas.getContext('2d')
+    if (!rawCtx) return
+    const ctx: CanvasRenderingContext2D = rawCtx
 
     const rect = canvas.getBoundingClientRect()
     canvas.width = rect.width || 120
