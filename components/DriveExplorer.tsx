@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import DicomViewer from './DicomViewer'
 import PdfReportViewer from './PdfReportViewer'
+import RealisticFireBurnOverlay from './RealisticFireBurnOverlay'
 import AsciiFireEffect from './AsciiFireEffect'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -218,6 +219,15 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
   const [hasMore,          setHasMore]          = useState(false)
   const [hoveredViewer,   setHoveredViewer]   = useState<'dcm' | 'pdf' | null>(null)
   const [maximizedViewer, setMaximizedViewer] = useState<'dcm' | 'pdf' | null>(null)
+  const [burningFolderId, setBurningFolderId] = useState<string | null>(null)
+
+  const triggerBurn = (id: string, callback: () => void) => {
+    setBurningFolderId(id)
+    setTimeout(() => {
+      callback()
+      setBurningFolderId(null)
+    }, 450)
+  }
 
   const months = FACILITY_MONTHS[facility] || FACILITY_MONTHS.AKROSS
 
@@ -533,7 +543,6 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
                     </motion.button>
                   )
                 }
-
                 return (
                   <motion.button
                     key={mf.key}
@@ -542,7 +551,7 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
                     transition={{ delay: i * 0.02 }}
                     whileHover={{ scale: 1.06, y: -5 }}
                     whileTap={{ scale: 0.97 }}
-                    onClick={() => handleMonthClick(mf.key)}
+                    onClick={() => triggerBurn(`month_${mf.key}`, () => handleMonthClick(mf.key))}
                     className={`group relative flex flex-col items-center pt-4 pb-5 px-3 rounded-2xl transition-all text-center cursor-pointer ${
                       hasData
                         ? 'hover:bg-sky-50/60 hover:shadow-2xl hover:shadow-sky-300/30'
@@ -550,7 +559,9 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
                     }`}
                     style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}
                   >
+                    {burningFolderId === `month_${mf.key}` && <RealisticFireBurnOverlay durationMs={500} />}
                     {/* macOS blue folder shape */}
+
                     <div className="relative mb-2 transition-transform group-hover:scale-105 group-hover:-translate-y-1">
                       <MacFolder variant={hasData ? 'blue' : 'gray'} size={76} />
                       {!hasData && (
@@ -602,11 +613,13 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
                     key={d.date}
                     whileHover={{ scale: 1.06, y: -4 }}
                     whileTap={{ scale: 0.97 }}
-                    onClick={() => setSelectedDate(d.date)}
-                    className="flex flex-col items-center pt-3 pb-4 px-2 rounded-2xl hover:bg-amber-50/60 hover:shadow-xl hover:shadow-amber-300/20 transition-all text-center group cursor-pointer"
+                    onClick={() => triggerBurn(`date_${d.date}`, () => setSelectedDate(d.date))}
+                    className="relative flex flex-col items-center pt-3 pb-4 px-2 rounded-2xl hover:bg-amber-50/60 hover:shadow-xl hover:shadow-amber-300/20 transition-all text-center group cursor-pointer overflow-hidden"
                     style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}
                   >
+                    {burningFolderId === `date_${d.date}` && <RealisticFireBurnOverlay durationMs={500} />}
                     <div className="relative mb-1.5 transition-transform group-hover:scale-105 group-hover:-translate-y-1">
+
                       <MacFolder variant="gold" size={60} />
                     </div>
                     <span className="text-[10px] font-black text-slate-800 group-hover:text-amber-700 leading-tight">
@@ -643,11 +656,13 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
                     key={f.facility}
                     whileHover={{ scale: 1.06, y: -4 }}
                     whileTap={{ scale: 0.97 }}
-                    onClick={() => setSelectedFacility(f.facility)}
-                    className="flex flex-col items-center pt-3 pb-4 px-2 rounded-2xl hover:bg-amber-50/60 hover:shadow-xl hover:shadow-amber-300/20 transition-all text-center group cursor-pointer"
+                    onClick={() => triggerBurn(`fac_${f.facility}`, () => setSelectedFacility(f.facility))}
+                    className="relative flex flex-col items-center pt-3 pb-4 px-2 rounded-2xl hover:bg-amber-50/60 hover:shadow-xl hover:shadow-amber-300/20 transition-all text-center group cursor-pointer overflow-hidden"
                     style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}
                   >
+                    {burningFolderId === `fac_${f.facility}` && <RealisticFireBurnOverlay durationMs={500} />}
                     <div className="relative mb-1.5 transition-transform group-hover:scale-105 group-hover:-translate-y-1">
+
                       <MacFolder variant="gold" size={60} />
                     </div>
                     <span className="text-[10px] font-black text-slate-800 group-hover:text-amber-700 leading-tight truncate w-full text-center">
@@ -737,15 +752,17 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
                         key={p.patient_id}
                         whileHover={{ scale: 1.06, y: -4 }}
                         whileTap={{ scale: 0.96 }}
-                        onClick={() => setSelectedPatient(p)}
-                        className="group flex flex-col items-center pt-3 pb-3 px-2 rounded-2xl hover:shadow-xl transition-all text-center cursor-pointer"
+                        onClick={() => triggerBurn(`pat_${p.patient_id}`, () => setSelectedPatient(p))}
+                        className="group relative flex flex-col items-center pt-3 pb-3 px-2 rounded-2xl hover:shadow-xl transition-all text-center cursor-pointer overflow-hidden"
                         style={{
                           background: 'transparent',
                           border: 'none',
                           boxShadow: 'none',
                         }}
                       >
+                        {burningFolderId === `pat_${p.patient_id}` && <RealisticFireBurnOverlay durationMs={500} />}
                         <div className="relative mb-1.5 transition-transform group-hover:scale-105 group-hover:-translate-y-1">
+
                           <MacFolder variant={isSuspect ? 'red' : 'gold'} size={viewMode === 'grid' ? 54 : 38} />
                           {isSuspect && (
                             <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 border-2 border-white flex items-center justify-center">
