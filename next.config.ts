@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  turbopack: {},
   allowedDevOrigins: ['medical-transmitter.duckdns.org', 'tb-engine.allianceindia.org'],
   async headers() {
     return [
