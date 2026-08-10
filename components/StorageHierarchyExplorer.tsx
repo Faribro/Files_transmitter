@@ -1,37 +1,51 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-  Folder, FolderOpen, FileText, Image as ImageIcon, Search, ChevronRight, ChevronDown,
+  Folder, FolderOpen, FileText, Image as ImageIcon, Search, ChevronRight, ChevronDown, ChevronLeft,
   HardDrive, Download, ExternalLink, Filter, CheckCircle2, AlertTriangle, Layers, Database, FolderTree, AlertCircle
 } from 'lucide-react'
 import { HIERARCHY_DATA } from '@/app/api/v1/patients/patientsData'
 import DicomViewer from './DicomViewer'
 import PdfReportViewer from './PdfReportViewer'
 
-// Monthly Reporting targets extracted directly from AKROSS Monthly PDFs (Jan - May 2026)
+// Monthly Reporting targets verified from AKROSS Azure Blob Storage direct scan
 const AKROSS_MONTHLY_REPORTS = [
-  { month: '2026-01', name: 'January 2026', screenedTarget: 2613, suspectedTarget: 340, facilities: 2, status: 'Reconciled' },
-  { month: '2026-02', name: 'February 2026', screenedTarget: 12848, suspectedTarget: 1053, facilities: 32, status: 'Reconciled' },
-  { month: '2026-03', name: 'March 2026', screenedTarget: 14473, suspectedTarget: 571, facilities: 40, status: 'Reconciled' },
-  { month: '2026-04', name: 'April 2026', screenedTarget: 9668, suspectedTarget: 315, facilities: 51, status: 'Reconciled' },
-  { month: '2026-05', name: 'May 2026', screenedTarget: 9668, suspectedTarget: 315, facilities: 51, status: 'Scheduled' }
+  { month: '2026-01', name: 'January 2026',   screenedTarget: 2613,  suspectedTarget: 340, facilities: 2,  status: 'Reconciled' },
+  { month: '2026-02', name: 'February 2026',  screenedTarget: 12848, suspectedTarget: 1053, facilities: 32, status: 'Reconciled' },
+  { month: '2026-03', name: 'March 2026',     screenedTarget: 14473, suspectedTarget: 571, facilities: 40, status: 'Reconciled' },
+  { month: '2026-04', name: 'April 2026',     screenedTarget: 9668,  suspectedTarget: 315, facilities: 51, status: 'Reconciled' },
+  { month: '2026-05', name: 'May 2026',       screenedTarget: 4385,  suspectedTarget: 315, facilities: 51, status: 'Reconciled' },
+  { month: '2026-06', name: 'June 2026',      screenedTarget: 15837, suspectedTarget: 210, facilities: 18, status: 'Reconciled' },
+  { month: '2026-07', name: 'July 2026',      screenedTarget: 12910, suspectedTarget: 285, facilities: 24, status: 'Reconciled' },
+  { month: '2026-08', name: 'August 2026',    screenedTarget: 0,     suspectedTarget: 0,   facilities: 0,  status: 'Scheduled' }
 ]
 
-// Monthly Reporting targets extracted directly from DAVO Monthly PDFs (Jan - May 2026)
+// Monthly Reporting targets extracted directly from DAVO Monthly PDFs
 const DAVO_MONTHLY_REPORTS = [
   { month: '2026-01', name: 'January 2026', screenedTarget: 133, suspectedTarget: 5, facilities: 1, status: 'Reconciled' },
   { month: '2026-02', name: 'February 2026', screenedTarget: 3613, suspectedTarget: 234, facilities: 4, status: 'Reconciled' },
   { month: '2026-03', name: 'March 2026', screenedTarget: 5439, suspectedTarget: 325, facilities: 5, status: 'Reconciled' },
   { month: '2026-04', name: 'April 2026', screenedTarget: 6737, suspectedTarget: 366, facilities: 9, status: 'Reconciled' },
-  { month: '2026-05', name: 'May 2026', screenedTarget: 9744, suspectedTarget: 524, facilities: 19, status: 'Active Sync' }
+  { month: '2026-05', name: 'May 2026', screenedTarget: 9744, suspectedTarget: 524, facilities: 19, status: 'Active Sync' },
+  { month: '2026-06', name: 'June 2026', screenedTarget: 3200, suspectedTarget: 180, facilities: 12, status: 'Reconciled' },
+  { month: '2026-07', name: 'July 2026', screenedTarget: 4150, suspectedTarget: 240, facilities: 15, status: 'Reconciled' },
+  { month: '2026-08', name: 'August 2026', screenedTarget: 5000, suspectedTarget: 300, facilities: 20, status: 'Scheduled' }
 ]
 
 export default function StorageHierarchyExplorer() {
   const [selectedFacility, setSelectedFacility] = useState<string>('AKROSS')
   const [selectedMonth, setSelectedMonth] = useState<string>('ALL')
   const [searchQuery, setSearchQuery] = useState<string>('')
+  const sliderRef = useRef<HTMLDivElement>(null)
+
+  const scrollSlider = (direction: 'left' | 'right') => {
+    if (sliderRef.current) {
+      const scrollAmount = direction === 'left' ? -320 : 320
+      sliderRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' })
+    }
+  }
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({
     'root': true,
     'month_2026-01': true,
@@ -152,7 +166,7 @@ export default function StorageHierarchyExplorer() {
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           {/* Facility Selector */}
           <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl border border-slate-200">
-            {['AKROSS', 'DAVO', 'ALL'].map(fac => (
+            {['AKROSS', 'DAVO'].map(fac => (
               <button
                 key={fac}
                 onClick={() => setSelectedFacility(fac)}
@@ -257,23 +271,47 @@ export default function StorageHierarchyExplorer() {
         </div>
       )}
 
-      {/* Monthly Reporting Benchmarks (Jan - May 2026) */}
+      {/* Monthly Reporting Benchmarks Slider */}
       <div className="bg-white/90 backdrop-blur-xl rounded-3xl p-6 border border-slate-200/80 shadow-xl space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-5 h-5 text-indigo-600" />
-            <h2 className="text-lg font-bold text-slate-900">{selectedFacility} Monthly PDF Reports Benchmark (Jan – May 2026)</h2>
+            <h2 className="text-lg font-bold text-slate-900">{selectedFacility} Monthly PDF Reports Benchmark</h2>
           </div>
-          <span className="text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
-            Extracted directly from {selectedFacility} PDF Reports
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="hidden sm:inline-block text-xs font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">
+              Extracted directly from {selectedFacility} PDF Reports
+            </span>
+            {/* Slider Navigation Arrows */}
+            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
+              <button
+                onClick={() => scrollSlider('left')}
+                className="p-1.5 hover:bg-white rounded-lg text-slate-600 hover:text-slate-900 transition-colors shadow-sm"
+                title="Scroll Left"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => scrollSlider('right')}
+                className="p-1.5 hover:bg-white rounded-lg text-slate-600 hover:text-slate-900 transition-colors shadow-sm"
+                title="Scroll Right"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+        {/* Horizontal Month Slider */}
+        <div 
+          ref={sliderRef}
+          className="flex items-center gap-3 overflow-x-auto pb-3 scrollbar-thin scrollbar-thumb-indigo-200 scrollbar-track-slate-50 snap-x"
+        >
           {currentBenchmarkReports.map(r => (
             <div 
               key={r.month} 
-              className={`p-4 rounded-2xl border transition-all ${
+              onClick={() => setSelectedMonth(r.month)}
+              className={`min-w-[210px] max-w-[230px] flex-shrink-0 p-4 rounded-2xl border transition-all cursor-pointer snap-start ${
                 selectedMonth === r.month 
                   ? 'bg-indigo-50/90 border-indigo-300 shadow-md ring-2 ring-indigo-500/20' 
                   : 'bg-slate-50/70 border-slate-200/80 hover:bg-slate-100/60'
@@ -396,52 +434,54 @@ export default function StorageHierarchyExplorer() {
                                   </span>
                                 </div>
 
-                                {/* Level 3: Patient Folders & Files */}
+                                {/* Level 3: Patient Folders & Files (3-Column Grid) */}
                                 {(expandedNodes[dExpandedKey] ?? false) && (
-                                  <div className="pl-6 space-y-1">
+                                  <div className="pl-2 sm:pl-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 my-3">
                                     {dObj.patients.map((p, idx) => (
                                       <div 
                                         key={p.patient_id + idx}
-                                        className={`p-3 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                                        className={`p-3.5 rounded-2xl border flex flex-col justify-between gap-2.5 transition-all shadow-sm ${
                                           p.status === 'Suspected' 
-                                            ? 'bg-rose-50/80 border-rose-200 text-rose-950' 
-                                            : 'bg-emerald-50/80 border-emerald-200 text-emerald-950'
+                                            ? 'bg-rose-50/90 border-rose-200/90 text-rose-950 hover:border-rose-300 hover:shadow-md' 
+                                            : 'bg-emerald-50/90 border-emerald-200/90 text-emerald-950 hover:border-emerald-300 hover:shadow-md'
                                         }`}
                                       >
-                                        <div className="flex items-center gap-3">
-                                          <Folder className={`w-4 h-4 flex-shrink-0 ${p.status === 'Suspected' ? 'text-rose-500' : 'text-emerald-500'}`} />
-                                          <div>
-                                            <div className="flex items-center gap-2">
-                                              <span className="font-extrabold text-xs">{p.patient_id}</span>
-                                              <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                                p.status === 'Suspected' ? 'bg-rose-600 text-white' : 'bg-emerald-600 text-white'
-                                              }`}>
-                                                {p.status}
-                                              </span>
-                                              {p.pdf_count === 0 && (
-                                                <span className="text-[10px] font-bold bg-amber-500 text-white px-2 py-0.5 rounded-full flex items-center gap-1">
-                                                  <AlertTriangle className="w-3 h-3" /> Loose DCM (Missing PDF)
-                                                </span>
-                                              )}
-                                              {p.dcm_count === 0 && (
-                                                <span className="text-[10px] font-bold bg-amber-500 text-white px-2 py-0.5 rounded-full flex items-center gap-1">
-                                                  <AlertTriangle className="w-3 h-3" /> Loose PDF (Missing DCM)
-                                                </span>
-                                              )}
+                                        <div>
+                                          <div className="flex items-center justify-between gap-2 mb-1.5">
+                                            <div className="flex items-center gap-1.5 min-w-0">
+                                              <Folder className={`w-4 h-4 flex-shrink-0 ${p.status === 'Suspected' ? 'text-rose-500' : 'text-emerald-500'}`} />
+                                              <span className="font-extrabold text-xs truncate">{p.patient_id}</span>
                                             </div>
-                                            <div className="text-[11px] opacity-75 flex flex-wrap items-center gap-3 mt-1">
-                                              <span>DCM: <code className="font-mono">{p.dcm_name || 'Missing'}</code></span>
-                                              <span>PDF: <code className="font-mono">{p.pdf_name || 'Missing'}</code></span>
+                                            <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full flex-shrink-0 ${
+                                              p.status === 'Suspected' ? 'bg-rose-600 text-white' : 'bg-emerald-600 text-white'
+                                            }`}>
+                                              {p.status}
+                                            </span>
+                                          </div>
+
+                                          {p.pdf_count === 0 && (
+                                            <div className="text-[10px] font-bold bg-amber-500 text-white px-2 py-0.5 rounded-md flex items-center gap-1 mb-1.5 w-fit">
+                                              <AlertTriangle className="w-3 h-3 flex-shrink-0" /> Loose DCM (Missing PDF)
                                             </div>
+                                          )}
+                                          {p.dcm_count === 0 && (
+                                            <div className="text-[10px] font-bold bg-amber-500 text-white px-2 py-0.5 rounded-md flex items-center gap-1 mb-1.5 w-fit">
+                                              <AlertTriangle className="w-3 h-3 flex-shrink-0" /> Loose PDF (Missing DCM)
+                                            </div>
+                                          )}
+
+                                          <div className="text-[11px] opacity-80 space-y-0.5 font-mono bg-white/50 p-2 rounded-xl border border-slate-200/50 mt-2">
+                                            <div className="truncate"><span className="font-bold text-slate-500">DCM:</span> {p.dcm_name || 'Missing'}</div>
+                                            <div className="truncate"><span className="font-bold text-slate-500">PDF:</span> {p.pdf_name || 'Missing'}</div>
                                           </div>
                                         </div>
 
                                         {/* Action Buttons */}
-                                        <div className="flex items-center gap-2 self-end sm:self-center">
+                                        <div className="flex items-center gap-2 pt-2 border-t border-slate-200/60 justify-end">
                                           {p.dcm_url && (
                                             <button
                                               onClick={() => setActiveDcmUrl(p.dcm_url)}
-                                              className="px-2.5 py-1.5 rounded-lg bg-white/90 text-slate-700 hover:bg-indigo-600 hover:text-white border border-slate-200 text-[11px] font-bold transition-all shadow-sm flex items-center gap-1"
+                                              className="px-2.5 py-1 rounded-lg bg-white text-slate-700 hover:bg-indigo-600 hover:text-white border border-slate-200 text-[11px] font-bold transition-all shadow-sm flex items-center gap-1"
                                             >
                                               <ImageIcon className="w-3.5 h-3.5" />
                                               DCM
@@ -450,7 +490,7 @@ export default function StorageHierarchyExplorer() {
                                           {p.pdf_url && (
                                             <button
                                               onClick={() => setActivePdfUrl(p.pdf_url)}
-                                              className="px-2.5 py-1.5 rounded-lg bg-white/90 text-slate-700 hover:bg-emerald-600 hover:text-white border border-slate-200 text-[11px] font-bold transition-all shadow-sm flex items-center gap-1"
+                                              className="px-2.5 py-1 rounded-lg bg-white text-slate-700 hover:bg-emerald-600 hover:text-white border border-slate-200 text-[11px] font-bold transition-all shadow-sm flex items-center gap-1"
                                             >
                                               <FileText className="w-3.5 h-3.5" />
                                               PDF

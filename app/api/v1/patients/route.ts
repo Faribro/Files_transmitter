@@ -45,16 +45,6 @@ export async function GET(request: NextRequest) {
         }
       })
 
-      // Dynamic Live Fallback for AKROSS July 2026 if static entry is updating
-      if (dateList.length === 0 && facilityParam === 'AKROSS' && monthParam === '2026-07') {
-        dateList = [{
-          date: 'MAIN',
-          total_patients: 1488,
-          suspected_count: 0,
-          not_suspected_count: 1488,
-          facility_count: 1
-        }]
-      }
 
       return NextResponse.json({
         facility: facilityParam,
@@ -84,14 +74,7 @@ export async function GET(request: NextRequest) {
         }
       })
 
-      if (facilityList.length === 0 && facilityParam === 'AKROSS' && monthParam === '2026-07') {
-        facilityList = [{
-          facility: 'AKROSS',
-          total_patients: 1488,
-          suspected_count: 0,
-          not_suspected_count: 1488
-        }]
-      }
+
 
       return NextResponse.json({
         facility: facilityParam,

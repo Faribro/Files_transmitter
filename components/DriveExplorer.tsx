@@ -85,16 +85,6 @@ import { HIERARCHY_DATA } from '@/app/api/v1/patients/patientsData'
 
 // Compute month stats dynamically from HIERARCHY_DATA to ensure 100% unified numbers across all tabs
 function getDynamicMonthStats(parentFacility: string, monthKey: string) {
-  if (parentFacility === 'AKROSS' && monthKey === '2026-03') {
-    return { dcm: 14473, pdf: 14473, patients: 14473 }
-  }
-  if (parentFacility === 'AKROSS' && monthKey === '2026-06') {
-    return { dcm: 1488, pdf: 3005, patients: 1488 }
-  }
-  if (parentFacility === 'AKROSS' && monthKey === '2026-07') {
-    return { dcm: 1488, pdf: 3005, patients: 1488 }
-  }
-
   const facData = HIERARCHY_DATA[parentFacility]?.[monthKey] || {}
   let totalPatients = 0
   let totalDcm = 0
@@ -399,12 +389,12 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
 
                 if (isMigrating) {
                   const liveData = akrossLiveData
-                  const targetFiles = liveData?.total || 4493
-                  const currentFiles = liveData?.transferred || 4493
-                  const pct = liveData?.pct ?? Math.min(100, Math.round((currentFiles / targetFiles) * 100))
-                  const livePatients = liveData?.patients || 1488
-                  const liveDcm = liveData?.dcm || 1488
-                  const livePdf = liveData?.pdf || 3005
+                  const targetFiles = liveData?.total ?? 0
+                  const currentFiles = liveData?.transferred ?? 0
+                  const pct = liveData?.pct ?? (targetFiles > 0 ? Math.min(100, Math.round((currentFiles / targetFiles) * 100)) : 0)
+                  const livePatients = liveData?.patients ?? 0
+                  const liveDcm = liveData?.dcm ?? 0
+                  const livePdf = liveData?.pdf ?? 0
 
                   return (
                     <motion.button
