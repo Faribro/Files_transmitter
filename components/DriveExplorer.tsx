@@ -84,6 +84,88 @@ const FACILITY_MONTHS: Record<string, MonthConfig[]> = {
 import { HIERARCHY_DATA } from '@/app/api/v1/patients/patientsData'
 
 // Compute month stats dynamically from HIERARCHY_DATA to ensure 100% unified numbers across all tabs
+// macOS Finder-style folder SVG — main folders (blue) and sub-folders (golden yellow)
+function MacFolder({ variant = 'blue', size = 72, className = '' }: { variant?: 'blue' | 'gold' | 'gray' | 'red' | 'green', size?: number, className?: string }) {
+  const themes = {
+    blue: {
+      body: ['#5EB5F5', '#2D9CDB', '#1A7BB8'],
+      tab:  ['#74C8FF', '#4AABF0'],
+      shine: 'rgba(255,255,255,0.45)',
+      shadow: '#1565a0',
+    },
+    gold: {
+      body: ['#FFD84D', '#F0A500', '#C87800'],
+      tab:  ['#FFE680', '#FFC929'],
+      shine: 'rgba(255,255,255,0.40)',
+      shadow: '#9B5E00',
+    },
+    gray: {
+      body: ['#C5CDD8', '#9AAABB', '#7A9AAB'],
+      tab:  ['#D8E2EA', '#B0C4D4'],
+      shine: 'rgba(255,255,255,0.35)',
+      shadow: '#5A7A8A',
+    },
+    red: {
+      body: ['#FF6B6B', '#E53E3E', '#C0392B'],
+      tab:  ['#FF9090', '#FF5252'],
+      shine: 'rgba(255,255,255,0.35)',
+      shadow: '#8B1A1A',
+    },
+    green: {
+      body: ['#48D597', '#22C678', '#15855A'],
+      tab:  ['#6FEDB5', '#35D988'],
+      shine: 'rgba(255,255,255,0.35)',
+      shadow: '#0E5C3A',
+    },
+  }
+  const t = themes[variant]
+  const w = size, h = size * 0.85
+  const tabW = w * 0.42, tabH = h * 0.115, tabR = 6
+  const bodyR = 8
+  const bodyY = tabH * 0.65
+  const bodyH = h - bodyY
+
+  return (
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+      <defs>
+        <linearGradient id={`fg-body-${variant}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={t.body[0]} />
+          <stop offset="60%" stopColor={t.body[1]} />
+          <stop offset="100%" stopColor={t.body[2]} />
+        </linearGradient>
+        <linearGradient id={`fg-tab-${variant}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={t.tab[0]} />
+          <stop offset="100%" stopColor={t.tab[1]} />
+        </linearGradient>
+        <filter id={`fg-shadow-${variant}`} x="-8%" y="-4%" width="116%" height="120%">
+          <feDropShadow dx="0" dy={size * 0.045} stdDeviation={size * 0.05} floodColor={t.shadow} floodOpacity="0.35" />
+        </filter>
+      </defs>
+      {/* Tab */}
+      <path
+        d={`M4,${bodyY} Q4,${bodyY - tabH} ${4 + tabR},${bodyY - tabH} L${tabW - tabR},${bodyY - tabH} Q${tabW},${bodyY - tabH} ${tabW},${bodyY - tabH + tabR} L${tabW + tabR * 1.5},${bodyY} Z`}
+        fill={`url(#fg-tab-${variant})`}
+      />
+      {/* Body */}
+      <rect
+        x={0} y={bodyY}
+        width={w} height={bodyH}
+        rx={bodyR}
+        fill={`url(#fg-body-${variant})`}
+        filter={`url(#fg-shadow-${variant})`}
+      />
+      {/* Shine */}
+      <rect
+        x={0} y={bodyY}
+        width={w} height={bodyH * 0.45}
+        rx={bodyR}
+        fill={t.shine}
+        style={{ mixBlendMode: 'screen' }}
+      />
+    </svg>
+  )
+}
+
 function getDynamicMonthStats(parentFacility: string, monthKey: string) {
   const facData = HIERARCHY_DATA[parentFacility]?.[monthKey] || {}
   let totalPatients = 0
@@ -459,44 +541,40 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
                     initial={{ opacity: 0, y: 16 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.02 }}
-                    whileHover={{ scale: 1.04, y: -3 }}
+                    whileHover={{ scale: 1.06, y: -5 }}
                     whileTap={{ scale: 0.97 }}
                     onClick={() => handleMonthClick(mf.key)}
-                    className={`group relative flex flex-col items-start p-5 rounded-2xl border-2 transition-all text-left overflow-hidden ${
+                    className={`group relative flex flex-col items-center pt-4 pb-5 px-3 rounded-2xl transition-all text-center cursor-pointer ${
                       hasData
-                        ? 'bg-gradient-to-br from-indigo-50/80 via-white to-purple-50/80 border-indigo-400 hover:border-indigo-600 shadow-md shadow-indigo-500/10 hover:shadow-xl hover:shadow-indigo-500/20'
-                        : 'bg-slate-100/80 border-dashed border-slate-300 hover:border-slate-400 opacity-70 hover:opacity-100'
+                        ? 'hover:bg-sky-50/60 hover:shadow-2xl hover:shadow-sky-300/30'
+                        : 'opacity-55 hover:opacity-80'
                     }`}
+                    style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}
                   >
-                    <div className="w-full flex items-center justify-between mb-3">
-                      <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shadow-md transition-transform group-hover:scale-105 ${
-                        hasData ? 'bg-gradient-to-tr from-indigo-600 to-purple-600 text-white' : 'bg-slate-200 text-slate-400'
-                      }`}>
-                        <Folder className="w-6 h-6" />
-                      </div>
+                    {/* macOS blue folder shape */}
+                    <div className="relative mb-2 transition-transform group-hover:scale-105 group-hover:-translate-y-1">
+                      <MacFolder variant={hasData ? 'blue' : 'gray'} size={76} />
                       {!hasData && (
-                        <span className="text-[10px] font-black px-2.5 py-1 rounded-full shadow-sm flex items-center gap-1 bg-slate-200 text-slate-500 border border-slate-300">
-                          ⏳ Scheduled
-                        </span>
+                        <span className="absolute -bottom-1 -right-1 text-[9px] font-black bg-slate-300 text-slate-600 px-1.5 py-0.5 rounded-full shadow">Soon</span>
                       )}
                     </div>
 
-                    <h3 className="text-xl font-black tracking-tight text-slate-900 group-hover:text-indigo-700">
+                    <h3 className={`text-[11px] font-black tracking-tight mt-1 ${
+                      hasData ? 'text-slate-800 group-hover:text-sky-700' : 'text-slate-400'
+                    }`}>
                       {mf.label}
                     </h3>
 
-                    <div className="mt-2 space-y-1 w-full">
-                      <p className="text-sm font-extrabold text-indigo-950">
-                        {fmtNum(akrossLiveData ? akrossLiveData.patients : stats.patients)} patients
-                      </p>
-                      <p className="text-xs font-bold text-slate-700 bg-white/90 px-2.5 py-0.5 rounded-lg border border-slate-200 shadow-sm inline-block">
-                        {fmtNum(akrossLiveData ? akrossLiveData.dcm : stats.dcm)} DCM · {fmtNum(akrossLiveData ? akrossLiveData.pdf : stats.pdf)} PDF
-                      </p>
-                    </div>
-
-                    <div className="mt-3 flex items-center gap-1 text-[10px] font-extrabold text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <span>Open Directory</span><ChevronRight className="w-3 h-3" />
-                    </div>
+                    {hasData && (
+                      <div className="mt-1 space-y-0.5">
+                        <p className="text-[10px] font-extrabold text-slate-600">
+                          {fmtNum(akrossLiveData ? akrossLiveData.patients : stats.patients)} patients
+                        </p>
+                        <p className="text-[9px] font-bold text-slate-400">
+                          {fmtNum(akrossLiveData ? akrossLiveData.dcm : stats.dcm)} DCM · {fmtNum(akrossLiveData ? akrossLiveData.pdf : stats.pdf)} PDF
+                        </p>
+                      </div>
+                    )}
                   </motion.button>
                 )
               })}
@@ -519,23 +597,24 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
                 <p className="text-xs font-bold text-slate-400">Loading Date Directories…</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-3">
                 {dateList.map((d) => (
                   <motion.button
                     key={d.date}
-                    whileHover={{ scale: 1.03, y: -2 }}
+                    whileHover={{ scale: 1.06, y: -4 }}
                     whileTap={{ scale: 0.97 }}
                     onClick={() => setSelectedDate(d.date)}
-                    className="flex flex-col items-start p-4 rounded-2xl bg-slate-50 hover:bg-indigo-50/80 border border-slate-200/80 hover:border-indigo-300 transition-all text-left group shadow-sm"
+                    className="flex flex-col items-center pt-3 pb-4 px-2 rounded-2xl hover:bg-amber-50/60 hover:shadow-xl hover:shadow-amber-300/20 transition-all text-center group cursor-pointer"
+                    style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}
                   >
-                    <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                      <Calendar className="w-4 h-4" />
+                    <div className="relative mb-1.5 transition-transform group-hover:scale-105 group-hover:-translate-y-1">
+                      <MacFolder variant="gold" size={60} />
                     </div>
-                    <span className="text-xs font-black text-slate-900 group-hover:text-indigo-600 transition-colors">
+                    <span className="text-[10px] font-black text-slate-800 group-hover:text-amber-700 leading-tight">
                       {d.date}
                     </span>
-                    <span className="text-[10px] font-bold text-slate-400 mt-1">
-                      {fmtNum(d.total_patients)} patients
+                    <span className="text-[9px] font-bold text-slate-400 mt-0.5">
+                      {fmtNum(d.total_patients)} pts
                     </span>
                   </motion.button>
                 ))}
@@ -559,23 +638,24 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
                 <p className="text-xs font-bold text-slate-400">Loading Facility Directories…</p>
               </div>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
                 {facilityList.map((f) => (
                   <motion.button
                     key={f.facility}
-                    whileHover={{ scale: 1.03, y: -2 }}
+                    whileHover={{ scale: 1.06, y: -4 }}
                     whileTap={{ scale: 0.97 }}
                     onClick={() => setSelectedFacility(f.facility)}
-                    className="flex flex-col items-start p-4 rounded-2xl bg-slate-50 hover:bg-indigo-50/80 border border-slate-200/80 hover:border-indigo-300 transition-all text-left group shadow-sm"
+                    className="flex flex-col items-center pt-3 pb-4 px-2 rounded-2xl hover:bg-amber-50/60 hover:shadow-xl hover:shadow-amber-300/20 transition-all text-center group cursor-pointer"
+                    style={{ background: 'transparent', border: 'none', boxShadow: 'none' }}
                   >
-                    <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center mb-2 group-hover:scale-110 transition-transform">
-                      <Building2 className="w-4 h-4" />
+                    <div className="relative mb-1.5 transition-transform group-hover:scale-105 group-hover:-translate-y-1">
+                      <MacFolder variant="gold" size={60} />
                     </div>
-                    <span className="text-xs font-black text-slate-900 group-hover:text-indigo-600 transition-colors">
+                    <span className="text-[10px] font-black text-slate-800 group-hover:text-amber-700 leading-tight truncate w-full text-center">
                       {f.facility}
                     </span>
-                    <span className="text-[10px] font-bold text-slate-400 mt-1">
-                      {fmtNum(f.total_patients)} patients
+                    <span className="text-[9px] font-bold text-slate-400 mt-0.5">
+                      {fmtNum(f.total_patients)} pts
                     </span>
                   </motion.button>
                 ))}
@@ -656,26 +736,30 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
                     return (
                       <motion.button
                         key={p.patient_id}
-                        whileHover={{ scale: 1.04, y: -2 }}
+                        whileHover={{ scale: 1.06, y: -4 }}
                         whileTap={{ scale: 0.96 }}
                         onClick={() => setSelectedPatient(p)}
-                        className={`group flex ${viewMode === 'grid' ? 'flex-col items-center p-4 text-center' : 'items-center justify-between px-4 py-3 text-left'} rounded-2xl border-2 transition-all shadow-sm hover:shadow-xl ${
-                          isSuspect
-                            ? 'bg-gradient-to-br from-red-500 to-rose-600 border-red-600 text-white shadow-red-500/20 hover:border-red-400'
-                            : 'bg-gradient-to-br from-emerald-500 to-teal-600 border-emerald-600 text-white shadow-emerald-500/20 hover:border-emerald-400'
-                        }`}
+                        className="group flex flex-col items-center pt-3 pb-3 px-2 rounded-2xl hover:shadow-xl transition-all text-center cursor-pointer"
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          boxShadow: 'none',
+                        }}
                       >
-                        <div className="flex items-center gap-2.5">
-                          <Folder className="w-5 h-5 text-white/90 group-hover:scale-110 transition-transform" />
-                          <span className="text-xs font-black tracking-tight break-all text-white drop-shadow-sm">
-                            {p.patient_id}
-                          </span>
+                        <div className="relative mb-1.5 transition-transform group-hover:scale-105 group-hover:-translate-y-1">
+                          <MacFolder variant={isSuspect ? 'red' : 'gold'} size={viewMode === 'grid' ? 54 : 38} />
+                          {isSuspect && (
+                            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-red-500 border-2 border-white flex items-center justify-center">
+                              <span className="text-[7px] text-white font-black">!</span>
+                            </span>
+                          )}
                         </div>
-                        <div className="flex items-center gap-1.5 mt-2">
-                          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-black tracking-wide bg-white/20 text-white border border-white/30">
-                            DCM: {p.dcm_url ? (p.dcm_count || 1) : 0} · PDF: {p.pdf_url ? (p.pdf_count || 1) : 0}
-                          </span>
-                        </div>
+                        <span className="text-[9px] font-black tracking-tight text-slate-800 group-hover:text-amber-700 leading-tight break-all max-w-full px-1">
+                          {p.patient_id}
+                        </span>
+                        <span className="text-[8px] font-bold text-slate-400 mt-0.5">
+                          {p.dcm_url ? '●' : '○'} DCM · {p.pdf_url ? '●' : '○'} PDF
+                        </span>
                       </motion.button>
                     )
                   })}
