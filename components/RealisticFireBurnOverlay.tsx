@@ -64,6 +64,7 @@ export default function RealisticFireBurnOverlay({ durationMs = 800 }: { duratio
     }
 
     function render() {
+      if (!ctx) return
       const elapsed = Date.now() - startTime
       if (elapsed > durationMs + 200) return
 
