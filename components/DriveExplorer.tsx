@@ -6,7 +6,7 @@ import {
   Folder, FolderOpen, FileText, Image as ImageIcon, Search, ChevronRight,
   HardDrive, Download, ExternalLink, ArrowLeft, RefreshCw, CheckCircle,
   AlertTriangle, LayoutGrid, List, FolderPlus, Upload, Maximize2, Minimize2,
-  X, Calendar, Building2, ShieldAlert, ShieldCheck, Flame, Filter, Zap
+  X, Calendar, Building2, ShieldAlert, ShieldCheck, Flame, Filter
 } from 'lucide-react'
 import DicomViewer from './DicomViewer'
 import PdfReportViewer from './PdfReportViewer'
@@ -426,43 +426,29 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
           )}
         </div>
 
-        {/* View toggle, search & Migration Monitor button */}
-        <div className="flex items-center gap-2">
-          {selectedFacility && !selectedPatient && (
-            <>
-              <div className="relative">
-                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  placeholder="Search patient ID…"
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  className="bg-white text-slate-900 text-[11px] font-bold pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 w-44"
-                />
-              </div>
-              <div className="flex items-center rounded-xl border border-slate-200 overflow-hidden">
-                <button onClick={() => setViewMode('grid')} className={`p-1.5 ${viewMode === 'grid' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-500'}`}>
-                  <LayoutGrid className="w-3.5 h-3.5" />
-                </button>
-                <button onClick={() => setViewMode('list')} className={`p-1.5 ${viewMode === 'list' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-500'}`}>
-                  <List className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </>
-          )}
-
-          {/* ⚡ Migration Monitor — interactive button in highlighted area */}
-          <a
-            href="/migration"
-            className="group relative flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[11px] font-black shadow-lg shadow-amber-500/30 hover:shadow-amber-500/50 hover:scale-105 transition-all overflow-hidden border border-amber-400/40"
-            title="Open Migration Monitor"
-          >
-            <span className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-            <Zap className="w-3.5 h-3.5 fill-white" />
-            <span className="hidden sm:inline">Monitor</span>
-            <span className="w-1.5 h-1.5 rounded-full bg-white animate-ping absolute top-1 right-1" />
-          </a>
-        </div>
+        {/* View toggle & search */}
+        {selectedFacility && !selectedPatient && (
+          <div className="flex items-center gap-2">
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Search patient ID…"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="bg-white text-slate-900 text-[11px] font-bold pl-8 pr-3 py-1.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 w-44"
+              />
+            </div>
+            <div className="flex items-center rounded-xl border border-slate-200 overflow-hidden">
+              <button onClick={() => setViewMode('grid')} className={`p-1.5 ${viewMode === 'grid' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-500'}`}>
+                <LayoutGrid className="w-3.5 h-3.5" />
+              </button>
+              <button onClick={() => setViewMode('list')} className={`p-1.5 ${viewMode === 'list' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-500'}`}>
+                <List className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="p-6">

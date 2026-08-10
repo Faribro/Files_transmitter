@@ -4,7 +4,7 @@ import { useState, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Folder, FolderOpen, FileText, Image as ImageIcon, Search, ChevronRight, ChevronDown, ChevronLeft,
-  HardDrive, Download, ExternalLink, Filter, CheckCircle2, AlertTriangle, Layers, Database, FolderTree, AlertCircle
+  HardDrive, Download, ExternalLink, Filter, CheckCircle2, AlertTriangle, Layers, Database, FolderTree, AlertCircle, Zap
 } from 'lucide-react'
 import { HIERARCHY_DATA } from '@/app/api/v1/patients/patientsData'
 import DicomViewer from './DicomViewer'
@@ -232,7 +232,20 @@ export default function StorageHierarchyExplorer() {
               className="w-full pl-10 pr-4 py-2 text-xs font-medium rounded-xl bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all shadow-sm"
             />
           </div>
+
+          {/* ⚡ Migration Monitor — interactive button in 3rd tab highlighted area */}
+          <a
+            href="/migration"
+            className="group relative flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white text-xs font-black shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 hover:scale-105 transition-all overflow-hidden border border-amber-400/40 flex-shrink-0"
+            title="Open Migration Monitor"
+          >
+            <span className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <Zap className="w-4 h-4 fill-white animate-pulse" />
+            <span>Migration Monitor</span>
+            <span className="w-2 h-2 rounded-full bg-white animate-ping absolute top-1 right-1" />
+          </a>
         </div>
+
       </div>
 
 
