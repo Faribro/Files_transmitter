@@ -6,13 +6,13 @@ import { usePathname } from 'next/navigation'
 import { FolderTree, Menu, X, ChevronLeft } from 'lucide-react'
 import AllianceIndiaLogo from './AllianceIndiaLogo'
 
-// Icon components for 'A' (Akross) and 'D' (Davo) with liquid gold glassmorphism
+// Icon components for 'A' (Akross) and 'D' (Davo) with metallic teal / greenish-blue foil glassmorphism
 function AkrossIcon({ isActive = false, className = '' }: { isActive?: boolean, className?: string }) {
   return (
     <div className={`w-7 h-7 rounded-xl flex items-center justify-center font-black text-xs transition-all shadow-md ${
       isActive
-        ? 'bg-slate-950 text-amber-400 border border-amber-300/60 shadow-amber-500/20'
-        : 'bg-gradient-to-tr from-amber-400 via-yellow-300 to-amber-500 text-slate-950 border border-amber-200/80 shadow-amber-500/30'
+        ? 'bg-white/25 text-white border border-white/40 shadow-sm'
+        : 'bg-gradient-to-tr from-teal-500 via-cyan-400 to-emerald-500 text-white border border-teal-200/60 shadow-teal-500/30'
     } ${className}`}>
       A
     </div>
@@ -23,8 +23,8 @@ function DavoIcon({ isActive = false, className = '' }: { isActive?: boolean, cl
   return (
     <div className={`w-7 h-7 rounded-xl flex items-center justify-center font-black text-xs transition-all shadow-md ${
       isActive
-        ? 'bg-slate-950 text-amber-400 border border-amber-300/60 shadow-amber-500/20'
-        : 'bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-600 text-slate-950 border border-amber-200/80 shadow-amber-500/30'
+        ? 'bg-white/25 text-white border border-white/40 shadow-sm'
+        : 'bg-gradient-to-tr from-cyan-600 via-teal-500 to-blue-600 text-white border border-cyan-200/60 shadow-cyan-500/30'
     } ${className}`}>
       D
     </div>
@@ -107,13 +107,13 @@ export default function Sidebar() {
                       group flex items-center ${isCollapsed ? 'justify-center p-3' : 'justify-between px-3.5 py-3'} rounded-2xl text-xs font-black
                       transition-all duration-200 relative overflow-hidden
                       ${isActive
-                        ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-slate-950 shadow-xl shadow-amber-500/25 border border-amber-300/70 scale-[1.02]'
-                        : 'text-slate-600 hover:bg-amber-50/70 hover:text-amber-900 hover:scale-[1.01]'
+                        ? 'bg-gradient-to-r from-teal-600 via-cyan-600 to-blue-600 text-white shadow-xl shadow-teal-500/25 border border-cyan-300/50 scale-[1.02]'
+                        : 'text-slate-600 hover:bg-teal-50/70 hover:text-teal-900 hover:scale-[1.01]'
                       }
                     `}
                     title={isCollapsed ? item.name : undefined}
                   >
-                    {/* Active Shining Gold Background Glow */}
+                    {/* Metallic Foil Shimmer Overlay */}
                     {isActive && (
                       <span className="absolute inset-0 bg-gradient-to-r from-white/20 via-transparent to-white/10 opacity-70 pointer-events-none" />
                     )}
@@ -124,8 +124,8 @@ export default function Sidebar() {
                       ) : StandardIcon ? (
                         <div className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all ${
                           isActive
-                            ? 'bg-slate-950 text-amber-400 border border-amber-300/60 shadow-md'
-                            : 'bg-slate-100 text-slate-500 group-hover:bg-amber-100 group-hover:text-amber-800'
+                            ? 'bg-white/25 text-white border border-white/40 shadow-sm'
+                            : 'bg-slate-100 text-slate-500 group-hover:bg-teal-100 group-hover:text-teal-800'
                         }`}>
                           <StandardIcon className="w-4 h-4 transition-transform group-hover:scale-110" />
                         </div>
@@ -134,7 +134,7 @@ export default function Sidebar() {
                     </div>
 
                     {!isCollapsed && isActive && (
-                      <span className="w-2 h-2 rounded-full bg-slate-950 animate-pulse shadow-sm relative z-10" />
+                      <span className="w-2 h-2 rounded-full bg-white animate-pulse shadow-sm relative z-10" />
                     )}
                   </Link>
                 )
