@@ -162,54 +162,79 @@ export default function StorageHierarchyExplorer() {
   return (
     <div className="space-y-8">
       {/* ── TOP FILTER & CONTROL BAR (AT VERY TOP) ────────────────────── */}
-      <div className="bg-white/90 backdrop-blur-xl rounded-2xl p-4 border border-slate-200/80 shadow-md flex flex-col md:flex-row items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
-          {/* Facility Selector */}
-          <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl border border-slate-200">
-            {['AKROSS', 'DAVO'].map(fac => (
+      <div className="bg-white/90 backdrop-blur-xl rounded-2xl px-4 py-3 border border-slate-200/80 shadow-md flex flex-col md:flex-row items-center gap-3">
+
+        {/* LEFT: Facility toggle pills — AKROSS | DAVO */}
+        <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-xl border border-slate-200 flex-shrink-0">
+          {['AKROSS', 'DAVO'].map(fac => (
+            <button
+              key={fac}
+              onClick={() => setSelectedFacility(fac)}
+              className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${
+                selectedFacility === fac
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              {fac}
+            </button>
+          ))}
+        </div>
+
+        {/* RIGHT: Month pills + search — fills remaining space */}
+        <div className="flex flex-1 items-center gap-2 overflow-x-auto min-w-0">
+          {/* Month interactive pill buttons */}
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+            <button
+              onClick={() => setSelectedMonth('ALL')}
+              className={`px-3 py-1.5 rounded-full text-[11px] font-black whitespace-nowrap transition-all border ${
+                selectedMonth === 'ALL'
+                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-500/25'
+                  : 'bg-white text-slate-500 border-slate-200 hover:border-indigo-300 hover:text-indigo-600'
+              }`}
+            >
+              All
+            </button>
+            {[
+              { key: '2026-01', label: 'Jan' },
+              { key: '2026-02', label: 'Feb' },
+              { key: '2026-03', label: 'Mar' },
+              { key: '2026-04', label: 'Apr' },
+              { key: '2026-05', label: 'May' },
+              { key: '2026-06', label: 'Jun' },
+              { key: '2026-07', label: 'Jul' },
+            ].map(m => (
               <button
-                key={fac}
-                onClick={() => setSelectedFacility(fac)}
-                className={`px-4 py-2 rounded-lg text-xs font-black transition-all ${
-                  selectedFacility === fac
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'text-slate-600 hover:text-slate-900'
+                key={m.key}
+                onClick={() => setSelectedMonth(m.key)}
+                className={`px-3 py-1.5 rounded-full text-[11px] font-black whitespace-nowrap transition-all border ${
+                  selectedMonth === m.key
+                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-500/25 scale-105'
+                    : 'bg-white text-slate-500 border-slate-200 hover:border-indigo-300 hover:text-indigo-600'
                 }`}
               >
-                {fac}
+                {m.label}
               </button>
             ))}
           </div>
 
-          {/* Month Selector */}
-          <select
-            value={selectedMonth}
-            onChange={e => setSelectedMonth(e.target.value)}
-            className="px-4 py-2 rounded-xl text-xs font-black bg-white text-slate-800 border border-slate-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          >
-            <option value="ALL">All Months (Jan - Jul)</option>
-            <option value="2026-01">January 2026</option>
-            <option value="2026-02">February 2026</option>
-            <option value="2026-03">March 2026</option>
-            <option value="2026-04">April 2026</option>
-            <option value="2026-05">May 2026</option>
-            <option value="2026-06">June 2026</option>
-            <option value="2026-07">July 2026</option>
-          </select>
-        </div>
+          {/* Divider */}
+          <div className="w-px h-5 bg-slate-200 flex-shrink-0 mx-1" />
 
-        {/* Search Input */}
-        <div className="relative w-full md:w-80">
-          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-          <input
-            type="text"
-            placeholder="Search Patient ID or File Name..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 text-xs font-medium rounded-xl bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all shadow-sm"
-          />
+          {/* Search input */}
+          <div className="relative flex-1 min-w-[160px] max-w-xs">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder="Search Patient ID..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 text-xs font-medium rounded-xl bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all shadow-sm"
+            />
+          </div>
         </div>
       </div>
+
 
       {/* Top Banner & Header */}
       <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 md:p-8 text-white shadow-2xl border border-indigo-500/20 relative overflow-hidden">
