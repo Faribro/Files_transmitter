@@ -49,13 +49,19 @@ export default function TypewriterReportCard({
     return () => { isMounted = false }
   }, [patientId])
 
+  // Clean inmate name delimiters (^ and *)
+  const cleanedName = (reportData?.inmate_name || patientName || '')
+    .replace(/\^/g, ' ')
+    .replace(/\*/g, ' ')
+    .trim()
+
   // Compute full report text to type out
-  const fullText = reportData?.raw_text || (
+  const fullText = (
     `AI Generated Medical Diagnostic Report\n` +
     `==================================================\n` +
     `PATIENT INFORMATION\n` +
     `Patient ID   : ${reportData?.patient_id || patientId}\n` +
-    `Patient Name : ${reportData?.inmate_name || patientName}\n` +
+    `Patient Name : ${cleanedName || `INMATE ${patientId}`}\n` +
     `Patient Age  : ${reportData?.age || age}    Gender : ${reportData?.gender || gender}\n` +
     `Study Date   : ${reportData?.screening_date || date}\n` +
     `--------------------------------------------------\n` +
@@ -72,6 +78,7 @@ export default function TypewriterReportCard({
     `--------------------------------------------------\n` +
     `DISCLAIMER: AI generated report for clinical review by qualified medical officers.`
   )
+
 
   // Typewriter effect engine
   useEffect(() => {
@@ -126,8 +133,9 @@ export default function TypewriterReportCard({
 
           <div className="px-3 py-1.5 rounded-xl bg-indigo-500/20 text-indigo-200 border border-indigo-400/30 flex items-center gap-1.5 shadow-sm">
             <User className="w-3.5 h-3.5 text-indigo-400" />
-            <span>Name: <strong className="text-white">{reportData?.inmate_name || patientName}</strong></span>
+            <span>Name: <strong className="text-white">{cleanedName || `INMATE ${patientId}`}</strong></span>
           </div>
+
 
           <div className="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 border border-slate-700 flex items-center gap-1.5">
             <span>Age: <strong className="text-white">{reportData?.age || age}</strong></span>
