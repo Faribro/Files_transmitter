@@ -4,7 +4,7 @@ import { useState, useMemo, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Folder, FolderOpen, FileText, Image as ImageIcon, Search, ChevronRight, ChevronDown, ChevronLeft,
-  HardDrive, Download, ExternalLink, Filter, CheckCircle2, AlertTriangle, Layers, Database, FolderTree, AlertCircle, Zap
+  HardDrive, Download, ExternalLink, Filter, CheckCircle2, AlertTriangle, Layers, Database, FolderTree, AlertCircle, Zap, Calendar
 } from 'lucide-react'
 import { HIERARCHY_DATA } from '@/app/api/v1/patients/patientsData'
 import DicomViewer from './DicomViewer'
@@ -36,7 +36,8 @@ const DAVO_MONTHLY_REPORTS = [
 
 export default function StorageHierarchyExplorer() {
   const [selectedFacility, setSelectedFacility] = useState<string>('AKROSS')
-  const [selectedMonth, setSelectedMonth] = useState<string>('ALL')
+  const [fromMonth, setFromMonth] = useState<string>('2026-01')
+  const [toMonth, setToMonth] = useState<string>('2026-07')
   const [searchQuery, setSearchQuery] = useState<string>('')
   const sliderRef = useRef<HTMLDivElement>(null)
 
@@ -83,7 +84,8 @@ export default function StorageHierarchyExplorer() {
     facilities.forEach(fac => {
       const facObj = HIERARCHY_DATA[fac] || {}
       Object.keys(facObj).forEach(mKey => {
-        if (selectedMonth !== 'ALL' && mKey !== selectedMonth) return
+        if (fromMonth && mKey < fromMonth) return
+        if (toMonth && mKey > toMonth) return
 
         if (!monthDataMap[mKey]) {
           monthDataMap[mKey] = { monthKey: mKey, dates: {} }
@@ -155,7 +157,7 @@ export default function StorageHierarchyExplorer() {
       totalNotSuspected,
       mismatchCount: Math.abs(totalDcms - totalPdfs)
     }
-  }, [selectedFacility, selectedMonth, searchQuery])
+  }, [selectedFacility, fromMonth, toMonth, searchQuery])
 
   const currentBenchmarkReports = selectedFacility === 'DAVO' ? DAVO_MONTHLY_REPORTS : AKROSS_MONTHLY_REPORTS
 
@@ -181,72 +183,95 @@ export default function StorageHierarchyExplorer() {
           ))}
         </div>
 
-        {/* RIGHT: Month pills + search — fills remaining space */}
-        <div className="flex flex-1 items-center gap-2 overflow-x-auto min-w-0">
-          {/* Month interactive pill buttons */}
-          <div className="flex items-center gap-1.5 flex-shrink-0">
-            <button
-              onClick={() => setSelectedMonth('ALL')}
-              className={`px-3 py-1.5 rounded-full text-[11px] font-black whitespace-nowrap transition-all border ${
-                selectedMonth === 'ALL'
-                  ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-500/25'
-                  : 'bg-white text-slate-500 border-slate-200 hover:border-indigo-300 hover:text-indigo-600'
-              }`}
+        {/* AWWWARDS-WINNING DATE RANGE PICKER (From – To) */}
+        <div className="flex items-center gap-2 bg-gradient-to-r from-slate-50 via-indigo-50/40 to-slate-50 p-1.5 rounded-2xl border border-slate-200/80 shadow-sm flex-shrink-0">
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/90 border border-slate-200/60 shadow-xs text-xs font-bold text-slate-700">
+            <Calendar className="w-3.5 h-3.5 text-indigo-600 flex-shrink-0" />
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">From</span>
+            <select
+              value={fromMonth}
+              onChange={e => {
+                const val = e.target.value
+                setFromMonth(val)
+                if (val > toMonth) setToMonth(val)
+              }}
+              className="bg-transparent font-black text-indigo-950 text-xs focus:outline-none cursor-pointer pr-1"
             >
-              All
-            </button>
-            {[
-              { key: '2026-01', label: 'Jan' },
-              { key: '2026-02', label: 'Feb' },
-              { key: '2026-03', label: 'Mar' },
-              { key: '2026-04', label: 'Apr' },
-              { key: '2026-05', label: 'May' },
-              { key: '2026-06', label: 'Jun' },
-              { key: '2026-07', label: 'Jul' },
-            ].map(m => (
-              <button
-                key={m.key}
-                onClick={() => setSelectedMonth(m.key)}
-                className={`px-3 py-1.5 rounded-full text-[11px] font-black whitespace-nowrap transition-all border ${
-                  selectedMonth === m.key
-                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-500/25 scale-105'
-                    : 'bg-white text-slate-500 border-slate-200 hover:border-indigo-300 hover:text-indigo-600'
-                }`}
-              >
-                {m.label}
-              </button>
-            ))}
+              <option value="2026-01">Jan 2026</option>
+              <option value="2026-02">Feb 2026</option>
+              <option value="2026-03">Mar 2026</option>
+              <option value="2026-04">Apr 2026</option>
+              <option value="2026-05">May 2026</option>
+              <option value="2026-06">Jun 2026</option>
+              <option value="2026-07">Jul 2026</option>
+            </select>
           </div>
 
-          {/* Divider */}
-          <div className="w-px h-5 bg-slate-200 flex-shrink-0 mx-1" />
+          <span className="text-indigo-400 font-extrabold text-xs">→</span>
 
-          {/* Search input */}
-          <div className="relative flex-1 min-w-[160px] max-w-xs">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder="Search Patient ID..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 text-xs font-medium rounded-xl bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all shadow-sm"
-            />
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-white/90 border border-slate-200/60 shadow-xs text-xs font-bold text-slate-700">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">To</span>
+            <select
+              value={toMonth}
+              onChange={e => {
+                const val = e.target.value
+                setToMonth(val)
+                if (val < fromMonth) setFromMonth(val)
+              }}
+              className="bg-transparent font-black text-indigo-950 text-xs focus:outline-none cursor-pointer pr-1"
+            >
+              <option value="2026-01">Jan 2026</option>
+              <option value="2026-02">Feb 2026</option>
+              <option value="2026-03">Mar 2026</option>
+              <option value="2026-04">Apr 2026</option>
+              <option value="2026-05">May 2026</option>
+              <option value="2026-06">Jun 2026</option>
+              <option value="2026-07">Jul 2026</option>
+            </select>
           </div>
 
-          {/* ⚡ Migration Monitor — interactive button in 3rd tab highlighted area */}
-          <a
-            href="/migration"
-            className="group relative flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white text-xs font-black shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 hover:scale-105 transition-all overflow-hidden border border-amber-400/40 flex-shrink-0"
-            title="Open Migration Monitor"
+          {/* All Range Quick Reset */}
+          <button
+            onClick={() => { setFromMonth('2026-01'); setToMonth('2026-07') }}
+            className={`px-3 py-1 rounded-xl text-[11px] font-black transition-all border ${
+              fromMonth === '2026-01' && toMonth === '2026-07'
+                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white border-indigo-600 shadow-md shadow-indigo-500/20 scale-105'
+                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100 hover:text-indigo-600'
+            }`}
+            title="Reset to Full Range (Jan - Jul)"
           >
-            <span className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-            <Zap className="w-4 h-4 fill-white animate-pulse" />
-            <span>Migration Monitor</span>
-            <span className="w-2 h-2 rounded-full bg-white animate-ping absolute top-1 right-1" />
-          </a>
+            All Range
+          </button>
         </div>
 
+        {/* Divider */}
+        <div className="w-px h-5 bg-slate-200 flex-shrink-0 mx-1" />
+
+        {/* Search input */}
+        <div className="relative flex-1 min-w-[160px] max-w-xs">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            placeholder="Search Patient ID..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 text-xs font-medium rounded-xl bg-slate-50 border border-slate-200 text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:bg-white transition-all shadow-sm"
+          />
+        </div>
+
+        {/* ⚡ Migration Monitor — interactive button in 3rd tab highlighted area */}
+        <a
+          href="/migration"
+          className="group relative flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-white text-xs font-black shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 hover:scale-105 transition-all overflow-hidden border border-amber-400/40 flex-shrink-0"
+          title="Open Migration Monitor"
+        >
+          <span className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity" />
+          <Zap className="w-4 h-4 fill-white animate-pulse" />
+          <span>Migration Monitor</span>
+          <span className="w-2 h-2 rounded-full bg-white animate-ping absolute top-1 right-1" />
+        </a>
       </div>
+
 
 
       {/* Top Banner & Header */}
@@ -345,16 +370,18 @@ export default function StorageHierarchyExplorer() {
           ref={sliderRef}
           className="flex items-center gap-3 overflow-x-auto pb-3 scrollbar-thin scrollbar-thumb-indigo-200 scrollbar-track-slate-50 snap-x"
         >
-          {currentBenchmarkReports.map(r => (
-            <div 
-              key={r.month} 
-              onClick={() => setSelectedMonth(r.month)}
-              className={`min-w-[210px] max-w-[230px] flex-shrink-0 p-4 rounded-2xl border transition-all cursor-pointer snap-start ${
-                selectedMonth === r.month 
-                  ? 'bg-indigo-50/90 border-indigo-300 shadow-md ring-2 ring-indigo-500/20' 
-                  : 'bg-slate-50/70 border-slate-200/80 hover:bg-slate-100/60'
-              }`}
-            >
+          {currentBenchmarkReports.map(r => {
+            const isSelected = fromMonth === r.month && toMonth === r.month
+            return (
+              <div 
+                key={r.month} 
+                onClick={() => { setFromMonth(r.month); setToMonth(r.month) }}
+                className={`min-w-[210px] max-w-[230px] flex-shrink-0 p-4 rounded-2xl border transition-all cursor-pointer snap-start ${
+                  isSelected 
+                    ? 'bg-indigo-50/90 border-indigo-300 shadow-md ring-2 ring-indigo-500/20' 
+                    : 'bg-slate-50/70 border-slate-200/80 hover:bg-slate-100/60'
+                }`}
+              >
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-bold text-slate-700">{r.name}</span>
                 <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${
@@ -377,8 +404,8 @@ export default function StorageHierarchyExplorer() {
                   <span className="font-semibold text-slate-700">{r.facilities}</span>
                 </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
 
