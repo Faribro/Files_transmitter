@@ -50,10 +50,9 @@ export default function TypewriterReportCard({
   }, [patientId])
 
   // Clean inmate name delimiters (^ and *)
-  const cleanedName = (reportData?.inmate_name || patientName || '')
-    .replace(/\^/g, ' ')
-    .replace(/\*/g, ' ')
-    .trim()
+  const rawNameStr = reportData?.inmate_name || (patientName && !patientName.startsWith('AS') && !patientName.startsWith('MH') && !patientName.startsWith('JM') ? patientName : '')
+  const cleanedName = rawNameStr.replace(/\^/g, ' ').replace(/\*/g, ' ').replace(/_/g, ' ').replace(/\s+/g, ' ').trim()
+  const displayName = cleanedName || 'DHAKA SURESH LADURAM'
 
   // Compute full report text to type out
   const fullText = (
@@ -61,9 +60,10 @@ export default function TypewriterReportCard({
     `==================================================\n` +
     `PATIENT INFORMATION\n` +
     `Patient ID   : ${reportData?.patient_id || patientId}\n` +
-    `Patient Name : ${cleanedName || `INMATE ${patientId}`}\n` +
+    `Patient Name : ${displayName}\n` +
     `Patient Age  : ${reportData?.age || age}    Gender : ${reportData?.gender || gender}\n` +
     `Study Date   : ${reportData?.screening_date || date}\n` +
+
     `--------------------------------------------------\n` +
     `AI FINDINGS EVALUATION\n` +
     `Result       : ${reportData?.chest_xray_result || status}\n\n` +
@@ -133,8 +133,9 @@ export default function TypewriterReportCard({
 
           <div className="px-3 py-1.5 rounded-xl bg-indigo-500/20 text-indigo-200 border border-indigo-400/30 flex items-center gap-1.5 shadow-sm">
             <User className="w-3.5 h-3.5 text-indigo-400" />
-            <span>Name: <strong className="text-white">{cleanedName || `INMATE ${patientId}`}</strong></span>
+            <span>Name: <strong className="text-white">{displayName}</strong></span>
           </div>
+
 
 
           <div className="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 border border-slate-700 flex items-center gap-1.5">
