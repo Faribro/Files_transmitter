@@ -6,18 +6,26 @@ import { usePathname } from 'next/navigation'
 import { FolderTree, Menu, X, ChevronLeft } from 'lucide-react'
 import AllianceIndiaLogo from './AllianceIndiaLogo'
 
-// Icon components for 'A' (Akross) and 'D' (Davo)
-function AkrossIcon({ className = '' }: { className?: string }) {
+// Icon components for 'A' (Akross) and 'D' (Davo) with liquid gold glassmorphism
+function AkrossIcon({ isActive = false, className = '' }: { isActive?: boolean, className?: string }) {
   return (
-    <div className={`w-6 h-6 rounded-lg bg-indigo-100 text-indigo-700 font-black text-xs flex items-center justify-center border border-indigo-200 shadow-sm ${className}`}>
+    <div className={`w-7 h-7 rounded-xl flex items-center justify-center font-black text-xs transition-all shadow-md ${
+      isActive
+        ? 'bg-slate-950 text-amber-400 border border-amber-300/60 shadow-amber-500/20'
+        : 'bg-gradient-to-tr from-amber-400 via-yellow-300 to-amber-500 text-slate-950 border border-amber-200/80 shadow-amber-500/30'
+    } ${className}`}>
       A
     </div>
   )
 }
 
-function DavoIcon({ className = '' }: { className?: string }) {
+function DavoIcon({ isActive = false, className = '' }: { isActive?: boolean, className?: string }) {
   return (
-    <div className={`w-6 h-6 rounded-lg bg-purple-100 text-purple-700 font-black text-xs flex items-center justify-center border border-purple-200 shadow-sm ${className}`}>
+    <div className={`w-7 h-7 rounded-xl flex items-center justify-center font-black text-xs transition-all shadow-md ${
+      isActive
+        ? 'bg-slate-950 text-amber-400 border border-amber-300/60 shadow-amber-500/20'
+        : 'bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-600 text-slate-950 border border-amber-200/80 shadow-amber-500/30'
+    } ${className}`}>
       D
     </div>
   )
@@ -84,7 +92,7 @@ export default function Sidebar() {
                 Facilities & Storage
               </p>
             )}
-            <nav className="space-y-2">
+            <nav className="space-y-2.5">
               {navigation.map((item) => {
                 const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href))
                 const CustomIcon = item.customIcon
@@ -96,25 +104,37 @@ export default function Sidebar() {
                     href={item.href}
                     onClick={() => setIsMobileOpen(false)}
                     className={`
-                      group flex items-center ${isCollapsed ? 'justify-center p-3.5' : 'justify-between px-4 py-3.5'} rounded-2xl text-sm font-bold
-                      transition-all duration-200
+                      group flex items-center ${isCollapsed ? 'justify-center p-3' : 'justify-between px-3.5 py-3'} rounded-2xl text-xs font-black
+                      transition-all duration-200 relative overflow-hidden
                       ${isActive
-                        ? 'bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white shadow-xl shadow-indigo-500/20 scale-[1.02]'
-                        : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 hover:scale-[1.01]'
+                        ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-slate-950 shadow-xl shadow-amber-500/25 border border-amber-300/70 scale-[1.02]'
+                        : 'text-slate-600 hover:bg-amber-50/70 hover:text-amber-900 hover:scale-[1.01]'
                       }
                     `}
                     title={isCollapsed ? item.name : undefined}
                   >
-                    <div className="flex items-center gap-3">
+                    {/* Active Shining Gold Background Glow */}
+                    {isActive && (
+                      <span className="absolute inset-0 bg-gradient-to-r from-white/20 via-transparent to-white/10 opacity-70 pointer-events-none" />
+                    )}
+
+                    <div className="flex items-center gap-3 relative z-10">
                       {CustomIcon ? (
-                        <CustomIcon className={isActive ? 'bg-white/20 text-white border-white/30' : ''} />
+                        <CustomIcon isActive={isActive} />
                       ) : StandardIcon ? (
-                        <StandardIcon className={`w-5 h-5 transition-transform group-hover:scale-110 ${isActive ? 'text-white' : 'text-slate-400 group-hover:text-indigo-600'}`} />
+                        <div className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all ${
+                          isActive
+                            ? 'bg-slate-950 text-amber-400 border border-amber-300/60 shadow-md'
+                            : 'bg-slate-100 text-slate-500 group-hover:bg-amber-100 group-hover:text-amber-800'
+                        }`}>
+                          <StandardIcon className="w-4 h-4 transition-transform group-hover:scale-110" />
+                        </div>
                       ) : null}
-                      {!isCollapsed && <span>{item.name}</span>}
+                      {!isCollapsed && <span className="tracking-tight">{item.name}</span>}
                     </div>
+
                     {!isCollapsed && isActive && (
-                      <span className="w-2.5 h-2.5 rounded-full bg-white animate-ping shadow-sm" />
+                      <span className="w-2 h-2 rounded-full bg-slate-950 animate-pulse shadow-sm relative z-10" />
                     )}
                   </Link>
                 )

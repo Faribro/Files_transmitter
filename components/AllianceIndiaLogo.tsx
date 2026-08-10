@@ -15,9 +15,9 @@ export default function AllianceIndiaLogo({ collapsed = false, className = '' }:
       <motion.div 
         whileHover={{ scale: 1.08 }}
         whileTap={{ scale: 0.95 }}
-        className={`w-11 h-11 rounded-2xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-600 flex items-center justify-center shadow-lg shadow-indigo-500/25 cursor-pointer text-white transition-all ${className}`}
+        className={`w-11 h-11 rounded-2xl bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-600 flex items-center justify-center shadow-lg shadow-amber-500/30 border border-amber-300/60 cursor-pointer text-slate-950 transition-all ${className}`}
       >
-        <ChevronRight className="w-6 h-6 stroke-[3]" />
+        <ChevronRight className="w-6 h-6 stroke-[3] text-slate-950" />
       </motion.div>
     )
   }
