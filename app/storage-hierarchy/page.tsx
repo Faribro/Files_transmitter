@@ -5,10 +5,10 @@ import StorageHierarchyExplorer from '@/components/StorageHierarchyExplorer'
 
 export default function StorageHierarchyPage() {
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-indigo-50/70 via-sky-50/50 to-purple-50/70 text-slate-900 font-sans">
+    <div className="flex min-h-screen bg-gradient-to-br from-indigo-50/70 via-sky-50/50 to-purple-50/70 text-slate-900 font-sans max-w-full overflow-x-hidden">
       <Sidebar />
 
-      <main className="flex-1 lg:ml-20 p-6 md:p-8 space-y-6 transition-all duration-300">
+      <main className="flex-1 min-w-0 lg:ml-20 p-4 md:p-8 space-y-6 transition-all duration-300 max-w-full overflow-x-hidden">
         <StorageHierarchyExplorer />
       </main>
     </div>

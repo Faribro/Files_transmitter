@@ -33,10 +33,10 @@ export default function LiveMigrationMonitorPage() {
   const fmt = (n: number) => (n || 0).toLocaleString()
 
   return (
-    <div className="flex min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-slate-100 font-sans">
+    <div className="flex min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-slate-100 font-sans max-w-full overflow-x-hidden">
       <Sidebar />
 
-      <main className="flex-1 lg:ml-20 p-6 md:p-8 space-y-8 transition-all duration-300">
+      <main className="flex-1 min-w-0 lg:ml-20 p-4 md:p-8 space-y-8 transition-all duration-300 max-w-full overflow-x-hidden">
         
         {/* ── TOP HEADER BAR ─────────────────────────────────────────────────── */}
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 pb-6 border-b border-slate-800/80">
