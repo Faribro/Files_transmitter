@@ -12,6 +12,8 @@ import DicomViewer from './DicomViewer'
 import PdfReportViewer from './PdfReportViewer'
 import RealisticFireBurnOverlay from './RealisticFireBurnOverlay'
 import AsciiFireEffect from './AsciiFireEffect'
+import TypewriterReportCard from './TypewriterReportCard'
+
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -815,8 +817,16 @@ export default function DriveExplorer({ facility, initialMonth, onMonthSelect }:
         {selectedPatient && (
           <div className="space-y-6">
             
+            {/* EXECUTIVE MEDICAL INTELLIGENCE TYPEWRITER REPORT CARD */}
+            <TypewriterReportCard
+              patientId={selectedPatient.patient_id}
+              status={selectedPatient.status === 'Suspected' ? 'Suspected to be Abnormal' : 'No Abnormalities Suspected'}
+              date={selectedPatient.date}
+            />
+
             {/* DYNAMIC SIDE-BY-SIDE FLEX CONTAINER WITH SMOOTH EXPAND ON HOVER */}
             <div className="flex flex-col lg:flex-row gap-6 w-full items-stretch transition-all duration-500 ease-in-out">
+
               
               {/* DICOM SCAN CARD */}
               <div
